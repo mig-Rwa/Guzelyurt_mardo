@@ -1,0 +1,24 @@
+{
+  "name": "mardo-cafe-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "cd apps/web && yarn dev",
+    "dev:functions": "cd apps/functions && yarn serve",
+    "dev:all": "concurrently \"yarn dev\" \"yarn dev:functions\"",
+    "build": "cd apps/web && yarn build",
+    "build:functions": "cd apps/functions && yarn build",
+    "lint": "cd apps/web && yarn lint",
+    "deploy:functions": "cd apps/functions && firebase deploy --only functions",
+    "emulators": "firebase emulators:start",
+    "seed": "cd scripts && npx ts-node seed-firestore.ts"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "typescript": "^5.3.3"
+  }
+}
