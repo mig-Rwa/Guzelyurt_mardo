@@ -82,7 +82,7 @@ export const translations = {
     },
     footer: {
       tagline: 'Crafting moments, one bite at a time.',
-      rights: '© 2025 Mardo Café. All rights reserved.'
+      rights: '© Keza Julian\'s man and her present you this Web app'
     },
     testimonials: {
       title: 'What Our Guests Say',
@@ -251,7 +251,7 @@ export const translations = {
     },
     footer: {
       tagline: 'Her lokmada anılar yaratıyoruz.',
-      rights: '© 2025 Mardo Café. Tüm hakları saklıdır.'
+      rights: '© Keza Julian\'s man and her present you this Web app'
     },
     testimonials: {
       title: 'Misafirlerimiz Ne Diyor',
