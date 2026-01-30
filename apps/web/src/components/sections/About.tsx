@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { Coffee, Award, Heart } from 'lucide-react';
 
@@ -18,11 +19,14 @@ export default function About() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left - Image */}
           <div className="relative">
-            <div className="aspect-square rounded-2xl overflow-hidden">
-              <img
-                src="https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg"
+            <div className="aspect-square rounded-2xl overflow-hidden relative">
+              <Image
+                src="https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg?auto=compress&cs=tinysrgb&w=800&h=800&dpr=1"
                 alt="Mardo Café"
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover"
+                loading="lazy"
               />
             </div>
             {/* Floating accent */}

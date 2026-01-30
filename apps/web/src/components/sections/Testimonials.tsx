@@ -1,6 +1,7 @@
 'use client';
 
 import { Star } from 'lucide-react';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { testimonials } from '@shared/data';
 
@@ -42,11 +43,16 @@ export default function Testimonials() {
 
               {/* Author */}
               <div className="flex items-center gap-3">
-                <img
-                  src={testimonial.image}
-                  alt={testimonial.name[language]}
-                  className="w-12 h-12 rounded-full object-cover"
-                />
+                <div className="relative w-12 h-12 rounded-full overflow-hidden">
+                  <Image
+                    src={`${testimonial.image}?auto=compress&cs=tinysrgb&w=100&h=100&dpr=1`}
+                    alt={testimonial.name[language]}
+                    fill
+                    sizes="48px"
+                    className="object-cover"
+                    loading="lazy"
+                  />
+                </div>
                 <div>
                   <p className="text-white font-semibold">
                     {testimonial.name[language]}

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { Float, Environment, PerspectiveCamera } from '@react-three/drei';
+import { Float, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
 import { isWebGLSupported, prefersReducedMotion } from '@/lib/utils';
 
@@ -102,8 +102,12 @@ export default function Hero3D() {
   return (
     <div className="absolute inset-0 pointer-events-none">
       <Canvas
-        dpr={[1, 1.5]} // Limit pixel ratio for performance
-        gl={{ antialias: true, alpha: true }}
+        dpr={[1, 1.5]}
+        gl={{ 
+          antialias: true,
+          alpha: true,
+          powerPreference: 'high-performance',
+        }}
         style={{ background: 'transparent' }}
       >
         <PerspectiveCamera makeDefault position={[0, 0, 5]} fov={45} />
@@ -112,9 +116,6 @@ export default function Hero3D() {
         <ambientLight intensity={0.5} />
         <directionalLight position={[5, 5, 5]} intensity={0.8} />
         <pointLight position={[-5, 5, 5]} intensity={0.3} color="#fad24b" />
-        
-        {/* Environment for reflections */}
-        <Environment preset="city" />
         
         {/* 3D Elements */}
         <Float speed={2} floatIntensity={0.5} rotationIntensity={0.2}>

@@ -1,16 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { Mail, Check, ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { isWebGLSupported } from '@/lib/utils';
+
+// Lazy load 3D component
+const Newsletter3D = lazy(() => import('@/components/3d/Newsletter3D'));
 
 export default function Newsletter() {
   const { t, language } = useLanguage();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [use3D, setUse3D] = useState(false);
+
+  useEffect(() => {
+    setUse3D(isWebGLSupported());
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,7 +63,21 @@ export default function Newsletter() {
           </div>
 
           <div className="relative z-10 text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 bg-mardo-dark rounded-full mb-6">
+            {/* 3D Envelope - replaces static icon on desktop */}
+            {use3D ? (
+              <div className="hidden md:flex justify-center mb-6">
+                <Suspense fallback={<div className="h-[160px] w-[160px] bg-mardo-dark/10 animate-pulse rounded-full" />}>
+                  <Newsletter3D subscribed={subscribed} />
+                </Suspense>
+              </div>
+            ) : (
+              <div className="inline-flex items-center justify-center w-14 h-14 bg-mardo-dark rounded-full mb-6">
+                <Mail className="w-7 h-7 text-mardo-yellow" />
+              </div>
+            )}
+            
+            {/* Static icon for mobile */}
+            <div className={use3D ? "md:hidden inline-flex items-center justify-center w-14 h-14 bg-mardo-dark rounded-full mb-6" : "hidden"}>
               <Mail className="w-7 h-7 text-mardo-yellow" />
             </div>
 

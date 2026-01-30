@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { X } from 'lucide-react';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { galleryImages } from '@shared/data';
-import { Gallery3D } from '@/components/3d';
 import { isWebGLSupported } from '@/lib/utils';
-import { useEffect } from 'react';
+
+// Lazy load 3D gallery to avoid blocking initial render
+const Gallery3D = lazy(() => import('@/components/3d/Gallery3D'));
 
 export default function Gallery() {
   const { t } = useLanguage();
@@ -30,10 +32,12 @@ export default function Gallery() {
 
         {/* 3D Gallery or Fallback */}
         {use3D ? (
-          <Gallery3D
-            images={galleryImages}
-            onImageClick={(url) => setSelectedImage(url)}
-          />
+          <Suspense fallback={<div className="h-[400px] w-full bg-mardo-dark/10 animate-pulse rounded-xl" />}>
+            <Gallery3D
+              images={galleryImages}
+              onImageClick={(url) => setSelectedImage(url)}
+            />
+          </Suspense>
         ) : (
           /* Fallback 2D Gallery Grid */
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
@@ -45,13 +49,16 @@ export default function Gallery() {
                   index === 0 ? 'md:col-span-2 md:row-span-2' : ''
                 }`}
               >
-                <img
-                  src={image}
-                  alt={`Gallery ${index + 1}`}
-                  className={`w-full object-cover transition-transform duration-700 group-hover:scale-110 ${
-                    index === 0 ? 'h-64 md:h-full' : 'h-48 md:h-64'
-                  }`}
-                />
+                <div className={`relative ${index === 0 ? 'h-64 md:h-full md:min-h-[400px]' : 'h-48 md:h-64'}`}>
+                  <Image
+                    src={`${image}?auto=compress&cs=tinysrgb&w=600&h=400&dpr=1`}
+                    alt={`Gallery ${index + 1}`}
+                    fill
+                    sizes={index === 0 ? "(max-width: 768px) 100vw, 66vw" : "(max-width: 768px) 50vw, 33vw"}
+                    className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    loading="lazy"
+                  />
+                </div>
                 <div className="absolute inset-0 bg-mardo-dark/0 group-hover:bg-mardo-dark/40 transition-all duration-300 flex items-center justify-center">
                   <div className="w-12 h-12 bg-mardo-yellow rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform scale-50 group-hover:scale-100 transition-all duration-300">
                     <span className="text-mardo-dark text-2xl font-light">+</span>
@@ -75,12 +82,16 @@ export default function Gallery() {
           >
             <X className="w-8 h-8" />
           </button>
-          <img
-            src={selectedImage}
-            alt="Gallery"
-            className="max-w-full max-h-[85vh] object-contain rounded-xl"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="relative w-full max-w-4xl h-[85vh]" onClick={(e) => e.stopPropagation()}>
+            <Image
+              src={`${selectedImage}?auto=compress&cs=tinysrgb&w=1200&h=800&dpr=2`}
+              alt="Gallery"
+              fill
+              sizes="100vw"
+              className="object-contain rounded-xl"
+              priority
+            />
+          </div>
         </div>
       )}
     </section>

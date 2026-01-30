@@ -1,16 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { Sparkles, RefreshCw, Coffee } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { fortuneMessages } from '@shared/data';
 import { Button } from '@/components/ui/button';
-import { getRandomItem } from '@/lib/utils';
+import { getRandomItem, isWebGLSupported } from '@/lib/utils';
+
+// Lazy load 3D component
+const Fortune3D = lazy(() => import('@/components/3d/Fortune3D'));
 
 export default function FortuneTelling() {
   const { language, t } = useLanguage();
   const [fortune, setFortune] = useState<string | null>(null);
   const [isRevealing, setIsRevealing] = useState(false);
+  const [use3D, setUse3D] = useState(false);
+
+  useEffect(() => {
+    setUse3D(isWebGLSupported());
+  }, []);
 
   const revealFortune = () => {
     setIsRevealing(true);
@@ -36,6 +44,15 @@ export default function FortuneTelling() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl p-8 md:p-10">
           <div className="flex flex-col md:flex-row items-center gap-8">
+            {/* 3D Coffee Cup */}
+            {use3D && (
+              <div className="hidden md:flex items-center justify-center">
+                <Suspense fallback={<div className="h-[200px] w-[200px] bg-mardo-purple/10 animate-pulse rounded-full" />}>
+                  <Fortune3D isRevealing={isRevealing} />
+                </Suspense>
+              </div>
+            )}
+
             {/* Left side - Info */}
             <div className="flex-1 text-center md:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-mardo-purple/20 rounded-full mb-4">

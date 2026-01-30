@@ -1,15 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { Coffee, Gift } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { loyaltyConfig } from '@shared/data';
 import { Button } from '@/components/ui/button';
+import { isWebGLSupported } from '@/lib/utils';
+
+// Lazy load 3D component
+const Loyalty3D = lazy(() => import('@/components/3d/Loyalty3D'));
 
 export default function LoyaltyProgram() {
   const { language, t } = useLanguage();
   const [stamps, setStamps] = useState(3); // Demo: user has 3 stamps
   const [joined, setJoined] = useState(false);
+  const [use3D, setUse3D] = useState(false);
+
+  useEffect(() => {
+    setUse3D(isWebGLSupported());
+  }, []);
 
   const remainingStamps = loyaltyConfig.stampsRequired - stamps;
 
@@ -52,7 +61,17 @@ export default function LoyaltyProgram() {
 
               {/* Right side - Stamps or Join */}
               {joined ? (
-                <div className="flex items-center gap-2">
+                use3D ? (
+                  <div className="hidden md:block">
+                    <Suspense fallback={<div className="h-[180px] w-[350px] bg-mardo-dark/20 animate-pulse rounded-xl" />}>
+                      <Loyalty3D stamps={stamps} totalStamps={loyaltyConfig.stampsRequired} />
+                    </Suspense>
+                  </div>
+                ) : null
+              ) : null}
+              
+              {joined ? (
+                <div className={use3D ? "flex md:hidden items-center gap-2" : "flex items-center gap-2"}>
                   {[...Array(loyaltyConfig.stampsRequired)].map((_, i) => (
                     <div
                       key={i}

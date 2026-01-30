@@ -1,9 +1,13 @@
 'use client';
 
 import { ArrowRight, UtensilsCrossed } from 'lucide-react';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { Button } from '@/components/ui/button';
-import { Hero3D } from '@/components/3d';
+import { Suspense, lazy } from 'react';
+
+// Lazy load 3D component to not block initial render
+const Hero3D = lazy(() => import('@/components/3d/Hero3D'));
 
 export default function Hero() {
   const { t } = useLanguage();
@@ -20,18 +24,26 @@ export default function Hero() {
     >
       {/* Background Image with Overlay */}
       <div className="absolute inset-0">
-        <img
-          src="https://images.pexels.com/photos/1002740/pexels-photo-1002740.jpeg"
+        <Image
+          src="https://images.pexels.com/photos/1002740/pexels-photo-1002740.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&dpr=1"
           alt="Mardo Café"
-          className="w-full h-full object-cover scale-105"
+          fill
+          priority
+          sizes="100vw"
+          quality={75}
+          className="object-cover scale-105"
+          placeholder="blur"
+          blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFgABAQEAAAAAAAAAAAAAAAAAAAUH/8QAIhAAAgEDAwUBAAAAAAAAAAAAAQIDAAQRBQYhEhMiMUFR/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAaEQACAwEBAAAAAAAAAAAAAAABAgADBBEh/9oADAMBAAIRAxEAPwCHt3cF3aXsMV5O89rM4SRJQGDA+xnkZqzuzcE9w8kJuJBE6lWCtgMCMEH+0pStM+NRfwDDrVSi5n//2Q=="
         />
         <div className="absolute inset-0 bg-gradient-to-b from-mardo-dark/70 via-mardo-dark/50 to-mardo-dark/90" />
         <div className="absolute inset-0 bg-mardo-brown/20" />
       </div>
 
-      {/* 3D Elements */}
+      {/* 3D Elements - Lazy loaded */}
       <div className="absolute inset-0 hidden md:block">
-        <Hero3D />
+        <Suspense fallback={null}>
+          <Hero3D />
+        </Suspense>
       </div>
 
       {/* Floating Elements (fallback/addition to 3D) */}

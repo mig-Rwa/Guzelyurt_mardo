@@ -1,6 +1,7 @@
 'use client';
 
 import { Clock, Sparkles } from 'lucide-react';
+import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { dailySpecials } from '@shared/data';
@@ -32,11 +33,16 @@ export default function DailySpecials() {
               className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/20 hover:border-mardo-yellow/50 transition-all duration-300 group"
             >
               <div className="flex gap-4">
-                <img
-                  src={special.image}
-                  alt={special.name[language]}
-                  className="w-24 h-24 object-cover rounded-xl"
-                />
+                <div className="relative w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden">
+                  <Image
+                    src={`${special.image}?auto=compress&cs=tinysrgb&w=200&h=200&dpr=1`}
+                    alt={special.name[language]}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                    loading="lazy"
+                  />
+                </div>
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
                     <div>
