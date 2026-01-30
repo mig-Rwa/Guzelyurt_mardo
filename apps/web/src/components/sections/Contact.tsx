@@ -40,10 +40,10 @@ export default function Contact() {
             ))}
           </div>
 
-          {/* Map placeholder */}
+          {/* Map */}
           <div className="bg-white/5 rounded-2xl overflow-hidden h-[300px] md:h-auto">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3009.1234567890!2d28.9784!3d41.0082!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNDHCsDAwJzI5LjUiTiAyOMKwNTgnNDIuMiJF!5e0!3m2!1sen!2str!4v1234567890"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3260.5697838861183!2d32.99138777498777!3d35.19227387274902!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14ddfeac04294aed%3A0xd10594d28abb1c19!2sMardo%20Terminal!5e0!3m2!1sen!2s!4v1769812324269!5m2!1sen!2s"
               width="100%"
               height="100%"
               style={{ border: 0, minHeight: '300px' }}
