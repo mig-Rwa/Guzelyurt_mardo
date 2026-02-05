@@ -9,6 +9,7 @@ import {
   Banknote,
   Check,
   ArrowLeft,
+  Camera,
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
@@ -17,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { generateOrderNumber } from '@/lib/utils';
+import PhotoUploadModal from './PhotoUploadModal';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -33,6 +35,8 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
+  const [orderId, setOrderId] = useState('');
+  const [showPhotoUpload, setShowPhotoUpload] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -66,14 +70,20 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
 
       if (response.ok) {
         const data = await response.json();
-        setOrderNumber(data.orderNumber || generateOrderNumber());
+        const newOrderNumber = data.orderNumber || generateOrderNumber();
+        const newOrderId = data.data?.id || `temp-${Date.now()}`;
+        setOrderNumber(newOrderNumber);
+        setOrderId(newOrderId);
         setOrderComplete(true);
         clearCart();
       }
     } catch (error) {
       console.error('Order error:', error);
       // Fallback for demo
-      setOrderNumber(generateOrderNumber());
+      const newOrderNumber = generateOrderNumber();
+      const newOrderId = `temp-${Date.now()}`;
+      setOrderNumber(newOrderNumber);
+      setOrderId(newOrderId);
       setOrderComplete(true);
       clearCart();
     } finally {
@@ -154,16 +164,36 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
               <p className="text-mardo-gray mb-2">
                 {t('checkout.estimatedTime')}
               </p>
-              <p className="text-xl font-semibold text-mardo-dark">
+              <p className="text-xl font-semibold text-mardo-dark mb-6">
                 {orderType === 'delivery' ? '30-45' : '15-20'}{' '}
                 {t('checkout.minutes')}
               </p>
+
+              {/* Photo Upload Prompt */}
+              <div className="bg-gradient-to-r from-mardo-yellow/20 to-mardo-beige/20 rounded-2xl p-6 mb-6 border border-mardo-yellow/30">
+                <Camera className="w-10 h-10 text-mardo-brown mx-auto mb-3" />
+                <h3 className="font-bold text-mardo-dark mb-2">
+                  {language === 'en' ? 'Share Your Experience!' : 'Deneyiminizi Paylaşın!'}
+                </h3>
+                <p className="text-sm text-mardo-gray mb-4">
+                  {language === 'en' 
+                    ? 'Upload a photo for a chance to be featured as Picture of the Day!' 
+                    : 'Günün Fotoğrafı olarak öne çıkma şansını yakalayın!'}
+                </p>
+                <button
+                  onClick={() => setShowPhotoUpload(true)}
+                  className="px-6 py-2.5 bg-mardo-yellow text-mardo-dark font-bold rounded-full hover:bg-mardo-beige transition-colors inline-flex items-center gap-2"
+                >
+                  <Camera className="w-4 h-4" />
+                  {language === 'en' ? 'Upload Photo' : 'Fotoğraf Yükle'}
+                </button>
+              </div>
 
               <a
                 href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '905555550123'}?text=${generateWhatsAppOrder()}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-8 px-6 py-3 bg-[#25D366] text-white font-semibold rounded-full hover:bg-[#25D366]/90 transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] text-white font-semibold rounded-full hover:bg-[#25D366]/90 transition-colors"
               >
                 {t('checkout.whatsappConfirm')}
               </a>
@@ -396,6 +426,13 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
           )}
         </div>
       </div>
+
+      {/* Photo Upload Modal */}
+      <PhotoUploadModal
+        isOpen={showPhotoUpload}
+        onClose={() => setShowPhotoUpload(false)}
+        orderId={orderId}
+      />
     </>
   );
 }

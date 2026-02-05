@@ -25,6 +25,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper to store user profile in localStorage
+const saveProfileToStorage = (profile: UserProfile) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(`user-profile-${profile.uid}`, JSON.stringify(profile));
+  }
+};
+
+// Helper to get user profile from localStorage
+const getProfileFromStorage = (uid: string): UserProfile | null => {
+  if (typeof window === 'undefined') return null;
+  const data = localStorage.getItem(`user-profile-${uid}`);
+  return data ? JSON.parse(data) : null;
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -36,11 +50,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initFirebase = async () => {
       if (typeof window === 'undefined') return;
       
+      // Check if Firebase is configured
+      const { isConfigured } = await import('@/lib/firebase');
+      
+      if (!isConfigured) {
+        console.warn('Firebase not configured. Running in demo mode.');
+        // Check for demo user in localStorage
+        const demoUserData = localStorage.getItem('demo-user');
+        if (demoUserData) {
+          const demoUser = JSON.parse(demoUserData);
+          setUser(demoUser);
+          const profile = getProfileFromStorage(demoUser.uid);
+          setUserProfile(profile || {
+            uid: demoUser.uid,
+            email: demoUser.email,
+            displayName: demoUser.displayName,
+            language: 'en',
+            createdAt: new Date().toISOString(),
+          });
+        }
+        setLoading(false);
+        return;
+      }
+      
       try {
         const { auth } = await import('@/lib/firebase');
         const { onAuthStateChanged } = await import('firebase/auth');
-        const { doc, getDoc, setDoc } = await import('firebase/firestore');
-        const { db } = await import('@/lib/firebase');
+        
+        if (!auth) {
+          console.error('Firebase auth not initialized');
+          setLoading(false);
+          return;
+        }
         
         setFirebaseLoaded(true);
         
@@ -54,27 +95,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             };
             setUser(userData);
             
-            // Fetch user profile from Firestore
-            try {
-              const profileDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-              if (profileDoc.exists()) {
-                setUserProfile(profileDoc.data() as UserProfile);
-              } else {
-                // Create initial profile
-                const newProfile: UserProfile = {
-                  uid: firebaseUser.uid,
-                  email: firebaseUser.email!,
-                  displayName: firebaseUser.displayName || undefined,
-                  photoURL: firebaseUser.photoURL || undefined,
-                  language: 'en',
-                  createdAt: new Date().toISOString(),
-                };
-                await setDoc(doc(db, 'users', firebaseUser.uid), newProfile);
-                setUserProfile(newProfile);
-              }
-            } catch (err) {
-              console.error('Error fetching profile:', err);
+            // Get profile from localStorage (no Firestore needed)
+            let profile = getProfileFromStorage(firebaseUser.uid);
+            if (!profile) {
+              // Create initial profile
+              profile = {
+                uid: firebaseUser.uid,
+                email: firebaseUser.email!,
+                displayName: firebaseUser.displayName || undefined,
+                photoURL: firebaseUser.photoURL || undefined,
+                language: 'en',
+                createdAt: new Date().toISOString(),
+              };
+              saveProfileToStorage(profile);
             }
+            setUserProfile(profile);
           } else {
             setUser(null);
             setUserProfile(null);
@@ -83,8 +118,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
 
         return () => unsubscribe();
-      } catch (err) {
-        console.error('Error initializing Firebase:', err);
+      } catch (error) {
+        console.error('Error initializing Firebase:', error);
         setLoading(false);
       }
     };
@@ -93,15 +128,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
+    // Demo mode fallback
+    const { isConfigured } = await import('@/lib/firebase');
+    
+    if (!isConfigured) {
+      const demoUser: User = {
+        uid: 'demo-user',
+        email: email,
+        displayName: email.split('@')[0],
+        photoURL: null,
+      };
+      setUser(demoUser);
+      
+      let profile = getProfileFromStorage(demoUser.uid);
+      if (!profile) {
+        profile = {
+          uid: 'demo-user',
+          email: email,
+          displayName: email.split('@')[0],
+          language: 'en',
+          createdAt: new Date().toISOString(),
+        };
+        saveProfileToStorage(profile);
+      }
+      setUserProfile(profile);
+      localStorage.setItem('demo-user', JSON.stringify(demoUser));
+      return;
+    }
+    
     const { auth } = await import('@/lib/firebase');
+    if (!auth) throw new Error('Firebase Auth not initialized');
     const { signInWithEmailAndPassword } = await import('firebase/auth');
     await signInWithEmailAndPassword(auth, email, password);
   }, []);
 
   const signUp = useCallback(async (email: string, password: string, displayName?: string) => {
-    const { auth, db } = await import('@/lib/firebase');
+    // Demo mode fallback
+    const { isConfigured } = await import('@/lib/firebase');
+    if (!isConfigured) {
+      const demoUser: User = {
+        uid: 'demo-user-' + Date.now(),
+        email: email,
+        displayName: displayName || email.split('@')[0],
+        photoURL: null,
+      };
+      setUser(demoUser);
+      
+      const profile: UserProfile = {
+        uid: demoUser.uid,
+        email: email,
+        displayName: displayName || email.split('@')[0],
+        language: 'en',
+        createdAt: new Date().toISOString(),
+      };
+      saveProfileToStorage(profile);
+      setUserProfile(profile);
+      localStorage.setItem('demo-user', JSON.stringify(demoUser));
+      return;
+    }
+    
+    const { auth } = await import('@/lib/firebase');
+    if (!auth) throw new Error('Firebase not initialized');
     const { createUserWithEmailAndPassword, updateProfile } = await import('firebase/auth');
-    const { doc, setDoc } = await import('firebase/firestore');
     
     const result = await createUserWithEmailAndPassword(auth, email, password);
     
@@ -109,7 +197,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await updateProfile(result.user, { displayName });
     }
     
-    // Create user profile
+    // Create user profile in localStorage (no Firestore needed)
     const newProfile: UserProfile = {
       uid: result.user.uid,
       email: result.user.email!,
@@ -117,20 +205,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       language: 'en',
       createdAt: new Date().toISOString(),
     };
-    await setDoc(doc(db, 'users', result.user.uid), newProfile);
+    saveProfileToStorage(newProfile);
+    setUserProfile(newProfile);
   }, []);
 
   const signInWithGoogle = useCallback(async () => {
-    const { auth, googleProvider, db } = await import('@/lib/firebase');
+    const { isConfigured } = await import('@/lib/firebase');
+    if (!isConfigured) {
+      throw new Error('Google Sign-In not available in demo mode. Please use email/password signup.');
+    }
+    
+    const { auth, googleProvider } = await import('@/lib/firebase');
+    if (!auth || !googleProvider) {
+      throw new Error('Firebase not properly initialized');
+    }
     const { signInWithPopup } = await import('firebase/auth');
-    const { doc, getDoc, setDoc } = await import('firebase/firestore');
     
     const result = await signInWithPopup(auth, googleProvider);
     
-    // Check if profile exists
-    const profileDoc = await getDoc(doc(db, 'users', result.user.uid));
-    if (!profileDoc.exists()) {
-      const newProfile: UserProfile = {
+    // Create/update profile in localStorage
+    let profile = getProfileFromStorage(result.user.uid);
+    if (!profile) {
+      profile = {
         uid: result.user.uid,
         email: result.user.email!,
         displayName: result.user.displayName || undefined,
@@ -138,19 +234,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         language: 'en',
         createdAt: new Date().toISOString(),
       };
-      await setDoc(doc(db, 'users', result.user.uid), newProfile);
+      saveProfileToStorage(profile);
     }
+    setUserProfile(profile);
   }, []);
 
   const logout = useCallback(async () => {
+    // Demo mode fallback
+    const { isConfigured } = await import('@/lib/firebase');
+    if (!isConfigured) {
+      setUser(null);
+      setUserProfile(null);
+      localStorage.removeItem('demo-user');
+      return;
+    }
+    
     const { auth } = await import('@/lib/firebase');
+    if (!auth) return;
     const { signOut } = await import('firebase/auth');
     await signOut(auth);
+    setUser(null);
     setUserProfile(null);
   }, []);
 
   const resetPassword = useCallback(async (email: string) => {
+    const { isConfigured } = await import('@/lib/firebase');
+    if (!isConfigured) {
+      throw new Error('Password reset not available in demo mode');
+    }
     const { auth } = await import('@/lib/firebase');
+    if (!auth) throw new Error('Firebase Auth not initialized');
     const { sendPasswordResetEmail } = await import('firebase/auth');
     await sendPasswordResetEmail(auth, email);
   }, []);
@@ -158,12 +271,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateUserProfile = useCallback(async (data: Partial<UserProfile>) => {
     if (!user) throw new Error('No user logged in');
     
-    const { db } = await import('@/lib/firebase');
-    const { doc, setDoc } = await import('firebase/firestore');
-    
-    await setDoc(doc(db, 'users', user.uid), data, { merge: true });
-    setUserProfile(prev => prev ? { ...prev, ...data } : null);
-  }, [user]);
+    const updatedProfile = userProfile ? { ...userProfile, ...data } : null;
+    if (updatedProfile) {
+      saveProfileToStorage(updatedProfile);
+      setUserProfile(updatedProfile);
+    }
+  }, [user, userProfile]);
 
   return (
     <AuthContext.Provider

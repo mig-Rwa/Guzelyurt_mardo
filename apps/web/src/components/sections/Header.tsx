@@ -89,12 +89,21 @@ export default function Header() {
 
             {/* Auth Button */}
             {user ? (
-              <button
-                onClick={() => logout()}
-                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-all duration-300"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
+              <>
+                <Link
+                  href={user.email?.includes('admin') ? '/admin' : '/dashboard'}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-all duration-300"
+                >
+                  <User className="w-4 h-4" />
+                  <span>{language === 'en' ? 'Dashboard' : 'Panel'}</span>
+                </Link>
+                <button
+                  onClick={() => logout()}
+                  className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-all duration-300"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </>
             ) : (
               <Link
                 href="/auth/login"

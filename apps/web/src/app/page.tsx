@@ -8,6 +8,7 @@ const Menu = lazy(() => import('@/components/sections/Menu'));
 const LoyaltyProgram = lazy(() => import('@/components/sections/LoyaltyProgram'));
 const About = lazy(() => import('@/components/sections/About'));
 const FortuneTelling = lazy(() => import('@/components/sections/FortuneTelling'));
+const PhotoGallery = lazy(() => import('@/components/sections/PhotoGallery'));
 const Testimonials = lazy(() => import('@/components/sections/Testimonials'));
 const Reservation = lazy(() => import('@/components/sections/Reservation'));
 const Gallery = lazy(() => import('@/components/sections/Gallery'));
@@ -42,7 +43,11 @@ export default function Home() {
           <FortuneTelling />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
-          <Testimonials />
+          <PhotoGallery />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>          <PhotoGallery />
+        </Suspense>
+        <Suspense fallback={<SectionSkeleton />}>          <Testimonials />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>
           <Reservation />
