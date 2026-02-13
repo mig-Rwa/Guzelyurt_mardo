@@ -2,3 +2,4 @@
 export * from './schemas';
 export * from './types';
 export * from './translations';
+export * from './data';

@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { Sparkles, RefreshCw, Coffee } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
-import { fortuneMessages } from '@shared/data';
+import { fortuneMessages } from '@shared';
 import { Button } from '@/components/ui/button';
 import { getRandomItem, isWebGLSupported } from '@/lib/utils';
 

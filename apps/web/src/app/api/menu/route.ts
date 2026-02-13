@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { menuItems } from '@shared/data';
+import { menuItems } from '@shared';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { dailySpecials } from '@shared/data';
+import { dailySpecials } from '@shared';
 
 export async function GET() {
   // Filter only active specials

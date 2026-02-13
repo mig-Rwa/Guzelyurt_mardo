@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { NewsletterSubscribeSchema } from '@shared/schemas';
+import { NewsletterSubscribeSchema } from '@shared';
 
 // In production, this would use Firestore
 const subscribers: any[] = [];

@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { X } from 'lucide-react';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
-import { galleryImages } from '@shared/data';
+import { galleryImages } from '@shared';
 import { isWebGLSupported } from '@/lib/utils';
 
 // Lazy load 3D gallery to avoid blocking initial render

@@ -16,6 +16,8 @@ import {
   LoyaltyPointsSchema,
   DailySummarySchema,
   LocalizedStringSchema,
+  CustomerPhotoSchema,
+  CustomerPhotoCreateSchema,
 } from './schemas';
 
 // Infer types from schemas
@@ -35,6 +37,8 @@ export type NewsletterSubscribe = z.infer<typeof NewsletterSubscribeSchema>;
 export type UserProfile = z.infer<typeof UserProfileSchema>;
 export type LoyaltyPoints = z.infer<typeof LoyaltyPointsSchema>;
 export type DailySummary = z.infer<typeof DailySummarySchema>;
+export type CustomerPhoto = z.infer<typeof CustomerPhotoSchema>;
+export type CustomerPhotoCreate = z.infer<typeof CustomerPhotoCreateSchema>;
 
 // Language type
 export type Language = 'en' | 'tr';

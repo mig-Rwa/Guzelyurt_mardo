@@ -6,8 +6,8 @@ import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
-import { menuItems } from '@shared/data';
-import type { MenuItem } from '@shared/types';
+import { menuItems } from '@shared';
+import type { MenuItem } from '@shared';
 
 // Memoized menu item card for better performance
 const MenuItemCard = memo(function MenuItemCard({

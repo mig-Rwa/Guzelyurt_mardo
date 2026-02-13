@@ -4,7 +4,7 @@ import { Clock, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
-import { dailySpecials } from '@shared/data';
+import { dailySpecials } from '@shared';
 import { Button } from '@/components/ui/button';
 
 export default function DailySpecials() {

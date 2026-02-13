@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { OrderCreateSchema } from '@shared/schemas';
+import { OrderCreateSchema } from '@shared';
 import { v4 as uuidv4 } from 'uuid';
 
 function generateOrderNumber(): string {

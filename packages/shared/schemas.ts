@@ -156,6 +156,34 @@ export const LoyaltyPointsSchema = z.object({
   lastUpdated: z.string(),
 });
 
+// ==================== Customer Photos ====================
+export const CustomerPhotoSchema = z.object({
+  id: z.string(),
+  orderId: z.string(),
+  userId: z.string().optional(),
+  customerName: z.string().min(2),
+  imageUrl: z.string().url(),
+  thumbnailUrl: z.string().url().optional(),
+  caption: z.string().max(200).optional(),
+  status: z.enum(['pending', 'approved', 'rejected']).default('pending'),
+  isFeatured: z.boolean().default(false),
+  featuredDate: z.string().optional(),
+  uploadedAt: z.string(),
+  approvedAt: z.string().optional(),
+  likes: z.number().int().min(0).default(0),
+});
+
+export const CustomerPhotoCreateSchema = CustomerPhotoSchema.omit({
+  id: true,
+  uploadedAt: true,
+  approvedAt: true,
+  thumbnailUrl: true,
+  status: true,
+  isFeatured: true,
+  likes: true,
+  featuredDate: true,
+});
+
 // ==================== Daily Summary (Cloud Function) ====================
 export const DailySummarySchema = z.object({
   id: z.string(),

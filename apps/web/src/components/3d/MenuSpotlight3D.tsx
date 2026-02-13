@@ -5,8 +5,7 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Image as DreiImage, Float, Environment, PerspectiveCamera, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { prefersReducedMotion, isWebGLSupported } from '@/lib/utils';
-import type { MenuItem } from '@shared/types';
-import type { Language } from '@shared/types';
+import type { MenuItem, Language } from '@shared';
 
 interface MenuSpotlightCardProps {
   item: MenuItem;

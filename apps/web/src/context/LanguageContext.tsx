@@ -1,8 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { translations } from '@shared/translations';
-import type { Language } from '@shared/types';
+import { translations, type Language } from '@shared';
 
 type TranslationValue = string | Record<string, unknown>;
 

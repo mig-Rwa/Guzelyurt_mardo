@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { Coffee, Gift } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
-import { loyaltyConfig } from '@shared/data';
+import { loyaltyConfig } from '@shared';
 import { Button } from '@/components/ui/button';
 import { isWebGLSupported } from '@/lib/utils';
 

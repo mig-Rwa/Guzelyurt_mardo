@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import type { UserProfile } from '@shared/types';
+import type { UserProfile } from '@shared';
 
 // Firebase types only (no runtime imports at module level)
 interface User {

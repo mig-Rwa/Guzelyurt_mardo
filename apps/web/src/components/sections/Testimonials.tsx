@@ -3,7 +3,7 @@
 import { Star } from 'lucide-react';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
-import { testimonials } from '@shared/data';
+import { testimonials } from '@shared';
 
 export default function Testimonials() {
   const { language, t } = useLanguage();
