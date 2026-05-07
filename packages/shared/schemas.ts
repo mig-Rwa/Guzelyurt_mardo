@@ -14,6 +14,7 @@ export const MenuItemSchema = z.object({
   category: z.string(),
   image: z.string().url(),
   available: z.boolean().default(true),
+  stock: z.number().int().min(0).default(50),
 });
 
 export const MenuItemCreateSchema = MenuItemSchema.omit({ id: true });
@@ -89,7 +90,8 @@ export const OrderSchema = z.object({
   items: z.array(OrderItemSchema),
   total: z.number().positive(),
   orderType: z.enum(['delivery', 'pickup']),
-  paymentMethod: z.enum(['cod', 'card']),
+  paymentMethod: z.enum(['manual']),
+  paymentStatus: z.enum(['pending', 'verified', 'rejected']).default('pending'),
   status: z.enum(['pending', 'preparing', 'ready', 'delivered', 'cancelled']).default('pending'),
   customer: z.object({
     name: z.string(),
@@ -110,7 +112,7 @@ export const OrderCreateSchema = z.object({
     image: z.string().url().optional(),
   })),
   orderType: z.enum(['delivery', 'pickup']),
-  paymentMethod: z.enum(['cod', 'card']),
+  paymentMethod: z.enum(['manual']),
   customer: z.object({
     name: z.string().min(2),
     phone: z.string().min(10),

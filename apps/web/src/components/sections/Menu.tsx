@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, memo, useCallback, useMemo } from 'react';
-import { Plus, Check } from 'lucide-react';
+import { useState, memo, useCallback, useMemo, useEffect } from 'react';
+import { Plus, Check, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { Button } from '@/components/ui/button';
-import { menuItems } from '@shared';
 import type { MenuItem } from '@shared';
 
 // Memoized menu item card for better performance
@@ -17,6 +16,7 @@ const MenuItemCard = memo(function MenuItemCard({
   onAddToCart,
   addedText,
   addToCartText,
+  isSoldOut,
 }: {
   item: MenuItem;
   language: 'en' | 'tr';
@@ -24,9 +24,10 @@ const MenuItemCard = memo(function MenuItemCard({
   onAddToCart: () => void;
   addedText: string;
   addToCartText: string;
+  isSoldOut: boolean;
 }) {
   return (
-    <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1">
+    <div className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-1 ${isSoldOut ? 'opacity-60' : ''}`}>
       {/* Image */}
       <div className="relative h-48 md:h-56 overflow-hidden">
         <Image
@@ -34,15 +35,22 @@ const MenuItemCard = memo(function MenuItemCard({
           alt={item.name[language]}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-          className="object-cover group-hover:scale-110 transition-transform duration-700"
+          className={`object-cover group-hover:scale-110 transition-transform duration-700 ${isSoldOut ? 'grayscale' : ''}`}
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-mardo-dark/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Price Badge */}
-        <div className="absolute top-4 right-4 bg-mardo-yellow text-mardo-dark px-3 py-1.5 rounded-full text-sm font-bold shadow-lg">
-          ₺{item.price}
-        </div>
+        {/* Price Badge or Sold Out Badge */}
+        {isSoldOut ? (
+          <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1.5 rounded-full text-sm font-bold shadow-lg flex items-center gap-1.5">
+            <AlertCircle className="w-4 h-4" />
+            {language === 'en' ? 'Sold Out' : 'Tükendi'}
+          </div>
+        ) : (
+          <div className="absolute top-4 right-4 bg-mardo-yellow text-mardo-dark px-3 py-1.5 rounded-full text-sm font-bold shadow-lg">
+            ₺{item.price}
+          </div>
+        )}
       </div>
 
       {/* Content */}
@@ -54,11 +62,21 @@ const MenuItemCard = memo(function MenuItemCard({
           {item.description[language]}
         </p>
 
+        {/* Stock Info */}
+        {!isSoldOut && (item.stock || 0) < 10 && (
+          <p className="text-xs text-orange-600 mb-3 font-semibold">
+            {language === 'en' ? `Only ${item.stock} left!` : `Sadece ${item.stock} kaldı!`}
+          </p>
+        )}
+
         {/* Add to Cart Button */}
         <Button
           onClick={onAddToCart}
+          disabled={isSoldOut}
           variant="secondary"
           className={`w-full py-3 rounded-xl font-semibold transition-all duration-300 ${
+            isSoldOut ? 'opacity-50 cursor-not-allowed' : ''
+          } ${
             isAdded ? 'bg-green-500 hover:bg-green-500 text-white' : ''
           }`}
         >
@@ -70,7 +88,7 @@ const MenuItemCard = memo(function MenuItemCard({
           ) : (
             <span className="flex items-center justify-center gap-2">
               <Plus className="w-5 h-5" />
-              {addToCartText}
+              {isSoldOut ? (language === 'en' ? 'Sold Out' : 'Tükendi') : addToCartText}
             </span>
           )}
         </Button>
@@ -84,6 +102,25 @@ export default function Menu() {
   const { addToCart } = useCart();
   const [activeCategory, setActiveCategory] = useState('all');
   const [addedItems, setAddedItems] = useState<Record<string, boolean>>({});
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch menu items on mount
+  useEffect(() => {
+    const loadMenu = async () => {
+      try {
+        const response = await fetch('/api/menu');
+        const data = await response.json();
+        setMenuItems(Array.isArray(data.data) ? data.data : []);
+      } catch (error) {
+        console.error('Failed to load menu:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadMenu();
+  }, []);
 
   const categories = useMemo(() => [
     { id: 'all', label: t('menu.categories.all') },
@@ -103,7 +140,7 @@ export default function Menu() {
     activeCategory === 'all'
       ? menuItems
       : menuItems.filter((item) => item.category === activeCategory),
-    [activeCategory]
+    [activeCategory, menuItems]
   );
 
   const handleAddToCart = useCallback((item: MenuItem) => {
@@ -113,6 +150,16 @@ export default function Menu() {
       setAddedItems((prev) => ({ ...prev, [item.id]: false }));
     }, 1500);
   }, [addToCart]);
+
+  if (isLoading) {
+    return (
+      <section id="menu" className="py-20 md:py-28 bg-mardo-cream">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <p className="text-mardo-gray">{language === 'en' ? 'Loading menu...' : 'Menü yükleniyor...'}</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="menu" className="py-20 md:py-28 bg-mardo-cream">
@@ -155,6 +202,7 @@ export default function Menu() {
               onAddToCart={() => handleAddToCart(item)}
               addedText={t('menu.added')}
               addToCartText={t('menu.addToCart')}
+              isSoldOut={(item.stock || 0) === 0}
             />
           ))}
         </div>

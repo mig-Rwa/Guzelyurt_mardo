@@ -5,7 +5,6 @@ import {
   X,
   Truck,
   Store,
-  CreditCard,
   Banknote,
   Check,
   ArrowLeft,
@@ -31,7 +30,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [orderType, setOrderType] = useState<'delivery' | 'pickup'>('delivery');
-  const [paymentMethod, setPaymentMethod] = useState<'cod' | 'card'>('cod');
+  const [paymentMethod] = useState<'manual'>('manual');
   const [isProcessing, setIsProcessing] = useState(false);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState('');
@@ -168,6 +167,18 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                 {orderType === 'delivery' ? '30-45' : '15-20'}{' '}
                 {t('checkout.minutes')}
               </p>
+
+              <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6 text-left">
+                <div className="flex items-center gap-3 mb-2">
+                  <Banknote className="w-5 h-5 text-amber-700" />
+                  <h3 className="font-semibold text-amber-900">
+                    Manual payment only
+                  </h3>
+                </div>
+                <p className="text-sm text-amber-800">
+                  Your order is placed without online payment. An administrator must verify the payment before the order is marked valid.
+                </p>
+              </div>
 
               {/* Photo Upload Prompt */}
               <div className="bg-gradient-to-r from-mardo-yellow/20 to-mardo-beige/20 rounded-2xl p-6 mb-6 border border-mardo-yellow/30">
@@ -335,51 +346,28 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     variant="secondary"
                     className="w-full h-12 rounded-xl font-semibold"
                   >
-                    Continue to Payment
+                    Continue to Order Review
                   </Button>
                 </div>
               )}
 
-              {/* Step 3: Payment */}
+              {/* Step 3: Manual payment */}
               {step === 3 && (
                 <div className="space-y-5">
                   <h3 className="font-semibold text-mardo-dark">
-                    {t('checkout.payment')}
+                    Manual payment required
                   </h3>
 
-                  <div className="space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('cod')}
-                      className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
-                        paymentMethod === 'cod'
-                          ? 'border-mardo-brown bg-mardo-brown/5'
-                          : 'border-gray-200'
-                      }`}
-                    >
-                      <Banknote className="w-6 h-6 text-mardo-brown" />
-                      <span className="font-medium text-mardo-dark">
-                        {t('checkout.cod')}
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod('card')}
-                      className={`w-full p-4 rounded-xl border-2 transition-all flex items-center gap-3 ${
-                        paymentMethod === 'card'
-                          ? 'border-mardo-brown bg-mardo-brown/5'
-                          : 'border-gray-200'
-                      }`}
-                    >
-                      <CreditCard className="w-6 h-6 text-mardo-brown" />
-                      <span className="font-medium text-mardo-dark">
-                        {t('checkout.card')}
-                      </span>
-                      <span className="text-xs text-mardo-gray ml-auto">
-                        Coming soon
-                      </span>
-                    </button>
+                  <div className="bg-mardo-brown/5 border border-mardo-brown/20 rounded-xl p-4 flex items-start gap-3">
+                    <Banknote className="w-6 h-6 text-mardo-brown mt-0.5" />
+                    <div>
+                      <p className="font-medium text-mardo-dark">
+                        Cash or in-person payment only
+                      </p>
+                      <p className="text-sm text-mardo-gray mt-1">
+                        No online payment is available. An administrator must confirm the payment before preparation starts.
+                      </p>
+                    </div>
                   </div>
 
                   {/* Order Summary */}
@@ -417,7 +405,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
                     {isProcessing ? (
                       <div className="w-6 h-6 border-2 border-mardo-dark/30 border-t-mardo-dark rounded-full animate-spin" />
                     ) : (
-                      t('checkout.placeOrder')
+                      'Place Manual Order'
                     )}
                   </Button>
                 </div>

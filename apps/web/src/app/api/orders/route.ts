@@ -3,12 +3,24 @@ import { OrderCreateSchema } from '@shared';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/lib/server/mockDb';
 import { fail, forbidden, getRequestContext, ok } from '@/lib/server/api';
+import { menuItems } from '@shared';
 
 function generateOrderNumber(): string {
   return 'MRD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
 type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+type PaymentStatus = 'pending' | 'verified' | 'rejected';
+
+// Initialize menu items in db on first load (if empty)
+function initializeMenu() {
+  if (db.menuItems.length === 0) {
+    db.menuItems = menuItems.map(item => ({
+      ...item,
+      stock: item.stock || 50,
+    }));
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,6 +51,7 @@ export async function POST(request: NextRequest) {
       total,
       orderType: data.orderType,
       paymentMethod: data.paymentMethod,
+      paymentStatus: 'pending' as PaymentStatus,
       status: 'pending' as OrderStatus,
       customer: data.customer,
       createdAt: new Date().toISOString(),
@@ -89,14 +102,21 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const orderId = body?.id as string | undefined;
     const status = body?.status as OrderStatus | undefined;
+    const paymentStatus = body?.paymentStatus as PaymentStatus | undefined;
 
-    if (!orderId || !status) {
-      return fail('Order id and status are required', 400);
+    if (!orderId || (!status && !paymentStatus)) {
+      return fail('Order id and an update value are required', 400);
     }
 
     const allowed: OrderStatus[] = ['pending', 'preparing', 'ready', 'delivered', 'cancelled'];
-    if (!allowed.includes(status)) {
+    const allowedPayment: PaymentStatus[] = ['pending', 'verified', 'rejected'];
+
+    if (status && !allowed.includes(status)) {
       return fail('Invalid status', 400);
+    }
+
+    if (paymentStatus && !allowedPayment.includes(paymentStatus)) {
+      return fail('Invalid payment status', 400);
     }
 
     const existing = db.orders.find((o) => o.id === orderId);
@@ -104,7 +124,31 @@ export async function PATCH(request: NextRequest) {
       return fail('Order not found', 404);
     }
 
-    existing.status = status;
+    // Decrement stock when payment is verified
+    if (paymentStatus === 'verified' && existing.paymentStatus !== 'verified') {
+      initializeMenu();
+      
+      for (const item of existing.items) {
+        const menuItem = db.menuItems.find(m => m.id === item.id);
+        if (menuItem) {
+          menuItem.stock = Math.max(0, menuItem.stock - item.quantity);
+          
+          // Auto-disable item if stock runs out
+          if (menuItem.stock === 0) {
+            menuItem.available = false;
+          }
+        }
+      }
+    }
+
+    if (status) {
+      existing.status = status;
+    }
+
+    if (paymentStatus) {
+      existing.paymentStatus = paymentStatus;
+    }
+
     return ok(existing);
   } catch (error) {
     console.error('Order update error:', error);

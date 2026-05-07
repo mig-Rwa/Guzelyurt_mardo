@@ -10,7 +10,8 @@ export const menuItems: MenuItem[] = [
     price: 45,
     category: 'hotDrinks',
     image: 'https://images.pexels.com/photos/2102818/pexels-photo-2102818.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '2',
@@ -19,7 +20,8 @@ export const menuItems: MenuItem[] = [
     price: 45,
     category: 'hotDrinks',
     image: 'https://images.pexels.com/photos/2102818/pexels-photo-2102818.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '3',
@@ -28,7 +30,8 @@ export const menuItems: MenuItem[] = [
     price: 15,
     category: 'hotDrinks',
     image: 'https://images.pexels.com/photos/230477/pexels-photo-230477.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '4',
@@ -37,7 +40,8 @@ export const menuItems: MenuItem[] = [
     price: 20,
     category: 'hotDrinks',
     image: 'https://images.pexels.com/photos/230477/pexels-photo-230477.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '5',
@@ -46,7 +50,8 @@ export const menuItems: MenuItem[] = [
     price: 25,
     category: 'hotDrinks',
     image: 'https://images.pexels.com/photos/1417945/pexels-photo-1417945.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '6',
@@ -55,7 +60,8 @@ export const menuItems: MenuItem[] = [
     price: 40,
     category: 'hotDrinks',
     image: 'https://images.pexels.com/photos/6413579/pexels-photo-6413579.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   // ==================== HOT COFFEE ====================
   {
@@ -65,7 +71,8 @@ export const menuItems: MenuItem[] = [
     price: 40,
     category: 'hotCoffee',
     image: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '11',
@@ -74,7 +81,8 @@ export const menuItems: MenuItem[] = [
     price: 50,
     category: 'hotCoffee',
     image: 'https://images.pexels.com/photos/302899/pexels-photo-302899.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '17',
@@ -83,7 +91,8 @@ export const menuItems: MenuItem[] = [
     price: 55,
     category: 'hotCoffee',
     image: 'https://images.pexels.com/photos/312418/pexels-photo-312418.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '18',
@@ -92,7 +101,8 @@ export const menuItems: MenuItem[] = [
     price: 55,
     category: 'hotCoffee',
     image: 'https://images.pexels.com/photos/350478/pexels-photo-350478.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '19',
@@ -101,7 +111,8 @@ export const menuItems: MenuItem[] = [
     price: 60,
     category: 'hotCoffee',
     image: 'https://images.pexels.com/photos/4264049/pexels-photo-4264049.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   // ==================== COLD COFFEE ====================
   {
@@ -111,7 +122,8 @@ export const menuItems: MenuItem[] = [
     price: 50,
     category: 'coldCoffee',
     image: 'https://images.pexels.com/photos/2615323/pexels-photo-2615323.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '31',
@@ -120,7 +132,8 @@ export const menuItems: MenuItem[] = [
     price: 55,
     category: 'coldCoffee',
     image: 'https://images.pexels.com/photos/2615323/pexels-photo-2615323.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '34',
@@ -129,7 +142,8 @@ export const menuItems: MenuItem[] = [
     price: 55,
     category: 'coldCoffee',
     image: 'https://images.pexels.com/photos/2396220/pexels-photo-2396220.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   // ==================== COLD DRINKS ====================
   {
@@ -139,7 +153,8 @@ export const menuItems: MenuItem[] = [
     price: 40,
     category: 'coldDrinks',
     image: 'https://images.pexels.com/photos/2109099/pexels-photo-2109099.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   {
     id: '56',
@@ -148,7 +163,8 @@ export const menuItems: MenuItem[] = [
     price: 60,
     category: 'coldDrinks',
     image: 'https://images.pexels.com/photos/1028714/pexels-photo-1028714.jpeg',
-    available: true
+    available: true,
+    stock: 50
   },
   // ==================== WAFFLES ====================
   {
@@ -158,7 +174,8 @@ export const menuItems: MenuItem[] = [
     price: 70,
     category: 'waffles',
     image: 'https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg',
-    available: true
+    available: true,
+    stock: 30
   },
   {
     id: '103',
@@ -167,7 +184,8 @@ export const menuItems: MenuItem[] = [
     price: 100,
     category: 'waffles',
     image: 'https://images.pexels.com/photos/376464/pexels-photo-376464.jpeg',
-    available: true
+    available: true,
+    stock: 30
   },
   // ==================== CAKES ====================
   {
@@ -177,7 +195,8 @@ export const menuItems: MenuItem[] = [
     price: 75,
     category: 'cakes',
     image: 'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg',
-    available: true
+    available: true,
+    stock: 20
   },
   {
     id: '82',
@@ -186,7 +205,8 @@ export const menuItems: MenuItem[] = [
     price: 70,
     category: 'milkDesserts',
     image: 'https://images.pexels.com/photos/6880219/pexels-photo-6880219.jpeg',
-    available: true
+    available: true,
+    stock: 20
   },
   // ==================== CHEESECAKE ====================
   {
@@ -196,7 +216,8 @@ export const menuItems: MenuItem[] = [
     price: 90,
     category: 'cheesecake',
     image: 'https://images.pexels.com/photos/1126359/pexels-photo-1126359.jpeg',
-    available: true
+    available: true,
+    stock: 15
   },
   // ==================== BREAKFAST ====================
   {
@@ -206,7 +227,8 @@ export const menuItems: MenuItem[] = [
     price: 60,
     category: 'breakfast',
     image: 'https://images.pexels.com/photos/566566/pexels-photo-566566.jpeg',
-    available: true
+    available: true,
+    stock: 30
   },
   {
     id: '113',
@@ -215,7 +237,8 @@ export const menuItems: MenuItem[] = [
     price: 55,
     category: 'breakfast',
     image: 'https://images.pexels.com/photos/566566/pexels-photo-566566.jpeg',
-    available: true
+    available: true,
+    stock: 30
   },
   // ==================== BURGERS ====================
   {
@@ -225,7 +248,8 @@ export const menuItems: MenuItem[] = [
     price: 95,
     category: 'burgers',
     image: 'https://images.pexels.com/photos/1639557/pexels-photo-1639557.jpeg',
-    available: true
+    available: true,
+    stock: 25
   }
 ];
 

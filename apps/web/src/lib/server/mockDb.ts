@@ -17,7 +17,8 @@ export interface StoredOrder {
   }>;
   total: number;
   orderType: 'delivery' | 'pickup';
-  paymentMethod: 'cod' | 'card';
+  paymentMethod: 'manual';
+  paymentStatus: 'pending' | 'verified' | 'rejected';
   status: OrderStatus;
   customer: {
     name: string;
@@ -70,10 +71,22 @@ export interface StoredUser {
   createdAt: string;
 }
 
+export interface StoredMenuItem {
+  id: string;
+  name: { en: string; tr: string };
+  description: { en: string; tr: string };
+  price: number;
+  category: string;
+  image: string;
+  available: boolean;
+  stock: number;
+}
+
 export const db = {
   orders: [] as StoredOrder[],
   reservations: [] as StoredReservation[],
   photos: [] as StoredPhoto[],
   subscribers: [] as StoredSubscriber[],
   users: [] as StoredUser[],
+  menuItems: [] as StoredMenuItem[],
 };

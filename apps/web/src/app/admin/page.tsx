@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useRouter } from 'next/navigation';
@@ -22,9 +22,11 @@ import {
   Eye,
   Edit,
   Link as LinkIcon,
+  Utensils,
 } from 'lucide-react';
+import MenuManagementTab from '@/components/admin/MenuManagementTab';
 
-type TabType = 'photos' | 'orders' | 'reservations' | 'users' | 'analytics' | 'notifications' | 'settings';
+type TabType = 'photos' | 'orders' | 'reservations' | 'users' | 'menu' | 'analytics' | 'notifications' | 'settings';
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
@@ -49,6 +51,7 @@ export default function AdminDashboard() {
   const tabs = [
     { id: 'photos' as TabType, icon: Camera, label: language === 'en' ? 'Photo Moderation' : 'Fotoğraf Moderasyonu' },
     { id: 'orders' as TabType, icon: Package, label: language === 'en' ? 'Orders' : 'Siparişler' },
+    { id: 'menu' as TabType, icon: Utensils, label: language === 'en' ? 'Menu' : 'Menü' },
     { id: 'reservations' as TabType, icon: Calendar, label: language === 'en' ? 'Reservations' : 'Rezervasyonlar' },
     { id: 'users' as TabType, icon: Users, label: language === 'en' ? 'Users' : 'Kullanıcılar' },
     { id: 'analytics' as TabType, icon: TrendingUp, label: language === 'en' ? 'Analytics' : 'Analitik' },
@@ -125,7 +128,8 @@ export default function AdminDashboard() {
           <div className="md:col-span-3">
             <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl shadow-2xl p-8 min-h-[600px] border border-white/20">
               {activeTab === 'photos' && <PhotoModerationTab language={language} />}
-              {activeTab === 'orders' && <OrdersManagementTab language={language} />}
+              {activeTab === 'orders' && <OrdersManagementTab language={language} user={user} />}
+              {activeTab === 'menu' && <MenuManagementTab language={language} user={user} />}
               {activeTab === 'reservations' && <ReservationsManagementTab language={language} />}
               {activeTab === 'users' && <UsersManagementTab language={language} />}
               {activeTab === 'analytics' && <AnalyticsTab language={language} />}
@@ -256,12 +260,98 @@ function PhotoModerationTab({ language }: { language: string }) {
   );
 }
 
-function OrdersManagementTab({ language }: { language: string }) {
-  const [orders] = useState([
-    { id: 'ORD-001', customer: 'Ali Yıldız', total: 450, status: 'pending', items: 3, date: new Date().toISOString() },
-    { id: 'ORD-002', customer: 'Ayşe Kaya', total: 320, status: 'shipped', items: 2, date: new Date(Date.now() - 86400000).toISOString() },
-    { id: 'ORD-003', customer: 'Mehmet Demir', total: 680, status: 'delivered', items: 5, date: new Date(Date.now() - 172800000).toISOString() },
-  ]);
+type AdminOrder = {
+  id: string;
+  orderNumber: string;
+  customer: { name: string };
+  total: number;
+  orderType: 'delivery' | 'pickup';
+  paymentStatus: 'pending' | 'verified' | 'rejected';
+  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  createdAt: string;
+  items: Array<{ quantity: number }>;
+};
+
+function OrdersManagementTab({ language, user }: { language: string; user: any }) {
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionError, setActionError] = useState('');
+  const [updatingId, setUpdatingId] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    const loadOrders = async () => {
+      setIsLoading(true);
+      setActionError('');
+
+      try {
+        const response = await fetch('/api/orders?all=true', {
+          headers: {
+            'x-user-id': user?.uid || 'admin',
+            'x-user-email': user?.email || '',
+            'x-user-role': user?.role || 'admin',
+          },
+        });
+
+        const data = await response.json();
+        if (!active) return;
+
+        setOrders(Array.isArray(data.data) ? data.data : []);
+      } catch (error) {
+        if (active) {
+          setActionError(language === 'en' ? 'Failed to load orders.' : 'Siparişler yüklenemedi.');
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadOrders();
+
+    return () => {
+      active = false;
+    };
+  }, [language, user]);
+
+  const updatePaymentStatus = async (orderId: string, paymentStatus: 'verified' | 'rejected') => {
+    setUpdatingId(orderId);
+    setActionError('');
+
+    try {
+      const response = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.uid || 'admin',
+          'x-user-email': user?.email || '',
+          'x-user-role': user?.role || 'admin',
+        },
+        body: JSON.stringify({
+          id: orderId,
+          paymentStatus,
+          status: paymentStatus === 'rejected' ? 'cancelled' : 'pending',
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update payment status');
+      }
+
+      const data = await response.json();
+      setOrders((current) =>
+        current.map((order) => (order.id === orderId ? data.data : order))
+      );
+    } catch (error) {
+      setActionError(language === 'en' ? 'Could not update payment state.' : 'Ödeme durumu güncellenemedi.');
+    } finally {
+      setUpdatingId('');
+    }
+  };
+
+  const pendingPayments = orders.filter((order) => order.paymentStatus === 'pending').length;
 
   return (
     <div className="text-white">
@@ -269,57 +359,103 @@ function OrdersManagementTab({ language }: { language: string }) {
         <h2 className="text-3xl font-bold">
           {language === 'en' ? '📦 Order Management' : '📦 Sipariş Yönetimi'}
         </h2>
+        <div className="px-4 py-2 bg-mardo-yellow/20 text-mardo-yellow rounded-full text-sm font-semibold border border-mardo-yellow/50">
+          {pendingPayments} {language === 'en' ? 'Pending payments' : 'Bekleyen ödemeler'}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-8">
         <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/30 rounded-xl p-6">
           <p className="text-blue-400/80 text-sm font-semibold">{language === 'en' ? 'Total Orders' : 'Toplam Siparişler'}</p>
-          <p className="text-4xl font-bold text-blue-300 mt-2">42</p>
+          <p className="text-4xl font-bold text-blue-300 mt-2">{orders.length}</p>
           <p className="text-xs text-blue-400/60 mt-1">{language === 'en' ? 'All time' : 'Her zaman'}</p>
         </div>
         <div className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/30 rounded-xl p-6">
-          <p className="text-orange-400/80 text-sm font-semibold">{language === 'en' ? 'Pending' : 'Beklemede'}</p>
-          <p className="text-4xl font-bold text-orange-300 mt-2">5</p>
-          <p className="text-xs text-orange-400/60 mt-1">{language === 'en' ? 'Need attention' : 'İlgi gerekiyor'}</p>
+          <p className="text-orange-400/80 text-sm font-semibold">{language === 'en' ? 'Pending Payments' : 'Bekleyen Ödemeler'}</p>
+          <p className="text-4xl font-bold text-orange-300 mt-2">{pendingPayments}</p>
+          <p className="text-xs text-orange-400/60 mt-1">{language === 'en' ? 'Need admin validation' : 'Yönetici doğrulaması gerekir'}</p>
         </div>
         <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30 rounded-xl p-6">
           <p className="text-green-400/80 text-sm font-semibold">{language === 'en' ? 'Revenue' : 'Gelir'}</p>
-          <p className="text-4xl font-bold text-green-300 mt-2">₺12,450</p>
-          <p className="text-xs text-green-400/60 mt-1">{language === 'en' ? 'This month' : 'Bu ay'}</p>
+          <p className="text-4xl font-bold text-green-300 mt-2">₺{orders.reduce((sum, order) => sum + order.total, 0).toFixed(2)}</p>
+          <p className="text-xs text-green-400/60 mt-1">{language === 'en' ? 'From manual orders' : 'Manuel siparişlerden'}</p>
         </div>
       </div>
 
-      <div className="space-y-3">
-        {orders.map((order) => (
-          <div key={order.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:bg-white/10 transition-all">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="w-12 h-12 bg-mardo-yellow/20 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6 text-mardo-yellow" />
+      {actionError && (
+        <div className="mb-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {actionError}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="text-white/70">{language === 'en' ? 'Loading orders...' : 'Siparişler yükleniyor...'}</div>
+      ) : (
+        <div className="space-y-3">
+          {orders.map((order) => (
+            <div key={order.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:bg-white/10 transition-all">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-12 h-12 bg-mardo-yellow/20 rounded-lg flex items-center justify-center">
+                  <Package className="w-6 h-6 text-mardo-yellow" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold">{order.orderNumber}</p>
+                  <p className="text-sm text-white/60">{order.customer?.name || 'Unknown customer'}</p>
+                  <p className="text-xs text-white/40 mt-1">
+                    {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString()}
+                  </p>
+                </div>
+                <div className="text-center">
+                  <p className="font-bold">₺{order.total.toFixed(2)}</p>
+                  <p className="text-xs text-white/50">{order.items.length} {language === 'en' ? 'items' : 'ürün'}</p>
+                </div>
+                <div className="flex flex-col gap-2 items-end">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    order.paymentStatus === 'pending' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50' :
+                    order.paymentStatus === 'verified' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+                    'bg-red-500/20 text-red-400 border border-red-500/50'
+                  }`}>
+                    {order.paymentStatus === 'pending' ? (language === 'en' ? 'Payment pending' : 'Ödeme beklemede') :
+                     order.paymentStatus === 'verified' ? (language === 'en' ? 'Payment verified' : 'Ödeme onaylandı') :
+                     (language === 'en' ? 'Payment rejected' : 'Ödeme reddedildi')}
+                  </span>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    order.status === 'pending' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' :
+                    order.status === 'preparing' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' :
+                    order.status === 'ready' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+                    order.status === 'delivered' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' :
+                    'bg-red-500/20 text-red-400 border border-red-500/50'
+                  }`}>
+                    {order.status === 'pending' ? (language === 'en' ? 'Pending' : 'Beklemede') :
+                     order.status === 'preparing' ? (language === 'en' ? 'Preparing' : 'Hazırlanıyor') :
+                     order.status === 'ready' ? (language === 'en' ? 'Ready' : 'Hazır') :
+                     order.status === 'delivered' ? (language === 'en' ? 'Delivered' : 'Teslim Edildi') :
+                     (language === 'en' ? 'Cancelled' : 'İptal Edildi')}
+                  </span>
+                </div>
+                <div className="flex gap-2 ml-4">
+                  <button
+                    onClick={() => updatePaymentStatus(order.id, 'verified')}
+                    disabled={updatingId === order.id || order.paymentStatus === 'verified'}
+                    className="px-3 py-2 bg-green-500/20 hover:bg-green-500/30 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    {language === 'en' ? 'Verify' : 'Onayla'}
+                  </button>
+                  <button
+                    onClick={() => updatePaymentStatus(order.id, 'rejected')}
+                    disabled={updatingId === order.id || order.paymentStatus === 'rejected'}
+                    className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    {language === 'en' ? 'Reject' : 'Reddet'}
+                  </button>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-semibold">{order.id}</p>
-                <p className="text-sm text-white/60">{order.customer}</p>
-              </div>
-              <div className="text-center">
-                <p className="font-bold">₺{order.total}</p>
-                <p className="text-xs text-white/50">{order.items} {language === 'en' ? 'items' : 'ürün'}</p>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                order.status === 'pending' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50' :
-                order.status === 'shipped' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' :
-                'bg-green-500/20 text-green-400 border border-green-500/50'
-              }`}>
-                {order.status === 'pending' ? language === 'en' ? 'Pending' : 'Beklemede' :
-                 order.status === 'shipped' ? language === 'en' ? 'Shipped' : 'Gönderildi' :
-                 language === 'en' ? 'Delivered' : 'Teslim Edildi'}
-              </span>
-              <button className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                <Edit className="w-4 h-4" />
-              </button>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -437,27 +573,147 @@ function UsersManagementTab({ language }: { language: string }) {
 }
 
 function AnalyticsTab({ language }: { language: string }) {
+  const [stats, setStats] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    loadAnalytics();
+  }, []);
+
+  const loadAnalytics = async () => {
+    try {
+      const response = await fetch('/api/orders?all=true', {
+        headers: {
+          'x-user-role': 'admin',
+        },
+      });
+      const data = await response.json();
+      const orders = Array.isArray(data.data) ? data.data : [];
+
+      // Calculate stats
+      let totalRevenue = 0;
+      const itemSales: { [key: string]: { name: any; count: number; total: number } } = {};
+      const statusBreakdown: { [key: string]: number } = {};
+      let verifiedOrderCount = 0;
+
+      orders.forEach((order: any) => {
+        // Only count verified orders in revenue
+        if (order.paymentStatus === 'verified') {
+          totalRevenue += order.items.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0);
+          verifiedOrderCount++;
+        }
+
+        // Status breakdown
+        statusBreakdown[order.status] = (statusBreakdown[order.status] || 0) + 1;
+
+        // Item sales
+        order.items.forEach((item: any) => {
+          if (!itemSales[item.id]) {
+            itemSales[item.id] = { name: item.name, count: 0, total: 0 };
+          }
+          itemSales[item.id].count += item.quantity;
+          itemSales[item.id].total += item.price * item.quantity;
+        });
+      });
+
+      const topItems = Object.values(itemSales)
+        .sort((a: any, b: any) => b.count - a.count)
+        .slice(0, 5);
+
+      const avgOrderValue = verifiedOrderCount > 0 ? totalRevenue / verifiedOrderCount : 0;
+
+      setStats({
+        totalRevenue,
+        totalOrders: orders.length,
+        verifiedOrders: verifiedOrderCount,
+        avgOrderValue,
+        topItems,
+        statusBreakdown,
+      });
+    } catch (error) {
+      console.error('Failed to load analytics:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="text-white">
+        <p>{language === 'en' ? 'Loading analytics...' : 'Analitik yükleniyor...'}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="text-white">
       <h2 className="text-3xl font-bold mb-8">
-        {language === 'en' ? '📊 Analytics & Reports' : '📊 Analitik ve Raporlar'}
+        {language === 'en' ? '📊 Sales Analytics & Reports' : '📊 Satış Analitikleri ve Raporlar'}
       </h2>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-gradient-to-br from-mardo-yellow/10 to-mardo-yellow/5 border border-mardo-yellow/30 rounded-xl p-6">
           <TrendingUp className="w-8 h-8 text-mardo-yellow mb-2" />
           <p className="text-white/60 text-sm">{language === 'en' ? 'Total Revenue' : 'Toplam Gelir'}</p>
-          <p className="text-3xl font-bold text-mardo-yellow mt-2">₺45,230</p>
+          <p className="text-2xl font-bold text-mardo-yellow mt-2">₺{stats.totalRevenue.toFixed(2)}</p>
         </div>
+
         <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/30 rounded-xl p-6">
-          <BarChart3 className="w-8 h-8 text-blue-400 mb-2" />
-          <p className="text-white/60 text-sm">{language === 'en' ? 'Monthly Growth' : 'Aylık Büyüme'}</p>
-          <p className="text-3xl font-bold text-blue-300 mt-2">+23%</p>
+          <Package className="w-8 h-8 text-blue-400 mb-2" />
+          <p className="text-white/60 text-sm">{language === 'en' ? 'Total Orders' : 'Toplam Siparişler'}</p>
+          <p className="text-2xl font-bold text-blue-300 mt-2">{stats.totalOrders}</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30 rounded-xl p-6">
+          <CheckCircle className="w-8 h-8 text-green-400 mb-2" />
+          <p className="text-white/60 text-sm">{language === 'en' ? 'Verified Orders' : 'Doğrulanmış Siparişler'}</p>
+          <p className="text-2xl font-bold text-green-300 mt-2">{stats.verifiedOrders}</p>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border border-purple-500/30 rounded-xl p-6">
+          <BarChart3 className="w-8 h-8 text-purple-400 mb-2" />
+          <p className="text-white/60 text-sm">{language === 'en' ? 'Avg Order Value' : 'Ort. Sipariş Değeri'}</p>
+          <p className="text-2xl font-bold text-purple-300 mt-2">₺{stats.avgOrderValue.toFixed(2)}</p>
         </div>
       </div>
 
-      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-        <p className="text-white/70">{language === 'en' ? 'Advanced analytics coming soon' : 'Gelişmiş analitik yakında'}</p>
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Top Items */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-xl font-bold mb-4">
+            {language === 'en' ? '🏆 Top 5 Items' : '🏆 En Çok Satılan 5 Öğe'}
+          </h3>
+          <div className="space-y-3">
+            {stats.topItems.map((item: any, idx: number) => (
+              <div key={item.name.en} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <div>
+                  <p className="font-semibold">{idx + 1}. {item.name[language as 'en' | 'tr'] || item.name.en}</p>
+                  <p className="text-sm text-white/60">{item.count} {language === 'en' ? 'sold' : 'satıldı'}</p>
+                </div>
+                <p className="font-bold text-mardo-yellow">₺{item.total.toFixed(2)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Status Breakdown */}
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <h3 className="text-xl font-bold mb-4">
+            {language === 'en' ? '📋 Order Status Breakdown' : '📋 Sipariş Durumu Dağılımı'}
+          </h3>
+          <div className="space-y-3">
+            {Object.entries(stats.statusBreakdown).map(([status, count]: [string, unknown]) => (
+              <div key={status} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                <p className="font-semibold capitalize">{status}</p>
+                <div className="flex items-center gap-3">
+                  <p className="text-sm text-white/60">{String(count)} orders</p>
+                  <p className="font-bold text-lg">{String(count)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
