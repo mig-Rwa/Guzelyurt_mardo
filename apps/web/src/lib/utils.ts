@@ -46,3 +46,16 @@ export function prefersReducedMotion(): boolean {
   if (typeof window === 'undefined') return false;
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
+
+// Role-based access checks
+export function isAdmin(role?: string): boolean {
+  return role === 'admin';
+}
+
+export function isModerator(role?: string): boolean {
+  return role === 'moderator' || role === 'admin';
+}
+
+export function canAccessAdminPanel(role?: string): boolean {
+  return isAdmin(role);
+}

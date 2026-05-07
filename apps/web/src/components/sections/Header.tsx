@@ -91,12 +91,21 @@ export default function Header() {
             {user ? (
               <>
                 <Link
-                  href={user.email?.includes('admin') ? '/admin' : '/dashboard'}
+                  href={(user as any)?.role === 'admin' ? '/admin' : '/dashboard'}
                   className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-all duration-300"
                 >
                   <User className="w-4 h-4" />
                   <span>{language === 'en' ? 'Dashboard' : 'Panel'}</span>
                 </Link>
+                {user.email === 'miguelmbabatunga31@gmail.com' && (
+                  <Link
+                    href="/admin-manager"
+                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-mardo-yellow/20 hover:bg-mardo-yellow/30 text-mardo-yellow text-sm transition-all duration-300"
+                  >
+                    <User className="w-4 h-4" />
+                    <span>{language === 'en' ? 'Manage Admins' : 'Yönetici Yönet'}</span>
+                  </Link>
+                )}
                 <button
                   onClick={() => logout()}
                   className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-all duration-300"

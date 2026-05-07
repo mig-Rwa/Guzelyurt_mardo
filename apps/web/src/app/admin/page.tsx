@@ -13,8 +13,15 @@ import {
   Settings,
   LogOut,
   Shield,
-  MessageSquare,
   Bell,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  BarChart3,
+  Eye,
+  Edit,
+  Link as LinkIcon,
 } from 'lucide-react';
 
 type TabType = 'photos' | 'orders' | 'reservations' | 'users' | 'analytics' | 'notifications' | 'settings';
@@ -25,15 +32,16 @@ export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('photos');
 
-  // Check if user is admin (in production, check role from database)
-  const isAdmin = user?.email?.includes('admin'); // Simple check for demo
+  // Check if user has admin role
+  const userRole = (user as any)?.role || 'user';
+  const hasAdminAccess = userRole === 'admin';
 
   if (!user) {
     router.push('/auth/login');
     return null;
   }
 
-  if (!isAdmin) {
+  if (!hasAdminAccess) {
     router.push('/dashboard');
     return null;
   }
@@ -54,29 +62,32 @@ export default function AdminDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-gray-800">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
       {/* Header */}
-      <div className="bg-gradient-to-r from-mardo-dark to-gray-900 text-white border-b border-mardo-yellow/20">
+      <div className="bg-gradient-to-r from-mardo-dark via-gray-900 to-gray-800 text-white border-b-2 border-mardo-yellow/30 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-mardo-yellow rounded-full flex items-center justify-center">
+              <div className="w-14 h-14 bg-gradient-to-br from-mardo-yellow to-mardo-beige rounded-full flex items-center justify-center shadow-lg">
                 <Shield className="w-7 h-7 text-mardo-dark" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold">
-                  {language === 'en' ? 'Admin Dashboard' : 'Yönetici Paneli'}
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-mardo-yellow to-mardo-beige bg-clip-text text-transparent">
+                  {language === 'en' ? 'Admin Control Center' : 'Yönetici Kontrol Merkezi'}
                 </h1>
-                <p className="text-mardo-beige text-sm">{user.email}</p>
+                <p className="text-mardo-yellow/80 text-sm">{user.email}</p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-              {language === 'en' ? 'Logout' : 'Çıkış'}
-            </button>
+            <div className="flex items-center gap-4">
+              <LinkIcon className="w-5 h-5 text-mardo-yellow" />
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-colors border border-red-500/30"
+              >
+                <LogOut className="w-4 h-4" />
+                {language === 'en' ? 'Logout' : 'Çıkış'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -86,7 +97,7 @@ export default function AdminDashboard() {
         <div className="grid md:grid-cols-4 gap-6">
           {/* Sidebar */}
           <div className="md:col-span-1">
-            <div className="bg-white/5 backdrop-blur rounded-2xl shadow-lg p-4 sticky top-4 border border-white/10">
+            <div className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-xl rounded-2xl shadow-xl p-4 sticky top-24 border border-white/20">
               <nav className="space-y-1">
                 {tabs.map((tab) => {
                   const Icon = tab.icon;
@@ -95,10 +106,10 @@ export default function AdminDashboard() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${
                         isActive
-                          ? 'bg-mardo-yellow text-mardo-dark font-semibold'
-                          : 'text-white/80 hover:bg-white/10'
+                          ? 'bg-gradient-to-r from-mardo-yellow to-mardo-beige text-mardo-dark shadow-lg'
+                          : 'text-white/70 hover:bg-white/10 border border-transparent hover:border-white/20'
                       }`}
                     >
                       <Icon className="w-5 h-5" />
@@ -112,14 +123,14 @@ export default function AdminDashboard() {
 
           {/* Content Area */}
           <div className="md:col-span-3">
-            <div className="bg-white/5 backdrop-blur rounded-2xl shadow-lg p-6 min-h-[600px] border border-white/10">
-              {activeTab === 'photos' && <PhotoModerationTab />}
-              {activeTab === 'orders' && <OrdersManagementTab />}
-              {activeTab === 'reservations' && <ReservationsManagementTab />}
-              {activeTab === 'users' && <UsersManagementTab />}
-              {activeTab === 'analytics' && <AnalyticsTab />}
-              {activeTab === 'notifications' && <NotificationsTab />}
-              {activeTab === 'settings' && <AdminSettingsTab />}
+            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl shadow-2xl p-8 min-h-[600px] border border-white/20">
+              {activeTab === 'photos' && <PhotoModerationTab language={language} />}
+              {activeTab === 'orders' && <OrdersManagementTab language={language} />}
+              {activeTab === 'reservations' && <ReservationsManagementTab language={language} />}
+              {activeTab === 'users' && <UsersManagementTab language={language} />}
+              {activeTab === 'analytics' && <AnalyticsTab language={language} />}
+              {activeTab === 'notifications' && <NotificationsTab language={language} />}
+              {activeTab === 'settings' && <AdminSettingsTab language={language} />}
             </div>
           </div>
         </div>
@@ -128,46 +139,182 @@ export default function AdminDashboard() {
   );
 }
 
-// Tab Components
-function PhotoModerationTab() {
-  const { language } = useLanguage();
+// ===== ADMIN TAB COMPONENTS =====
+
+function PhotoModerationTab({ language }: { language: string }) {
   const [photos] = useState([
-    { id: '1', customerName: 'John Doe', status: 'pending', uploadedAt: new Date().toISOString() },
-    { id: '2', customerName: 'Jane Smith', status: 'pending', uploadedAt: new Date().toISOString() },
+    {
+      id: '1',
+      customerName: 'Ali Yıldız',
+      email: 'ali@example.com',
+      status: 'pending',
+      uploadedAt: new Date().toISOString(),
+      featured: false,
+    },
+    {
+      id: '2',
+      customerName: 'Ayşe Kaya',
+      email: 'ayse@example.com',
+      status: 'pending',
+      uploadedAt: new Date().toISOString(),
+      featured: false,
+    },
+    {
+      id: '3',
+      customerName: 'Mehmet Demir',
+      email: 'mehmet@example.com',
+      status: 'approved',
+      uploadedAt: new Date(Date.now() - 86400000).toISOString(),
+      featured: true,
+    },
   ]);
 
   return (
     <div className="text-white">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold">
-          {language === 'en' ? 'Photo Moderation' : 'Fotoğraf Moderasyonu'}
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-3xl font-bold">
+          {language === 'en' ? '📸 Photo Moderation' : '📸 Fotoğraf Moderasyonu'}
         </h2>
-        <div className="px-3 py-1 bg-mardo-yellow text-mardo-dark rounded-full text-sm font-semibold">
-          {photos.length} {language === 'en' ? 'Pending' : 'Bekliyor'}
+        <div className="flex gap-3">
+          <div className="px-4 py-2 bg-orange-500/20 text-orange-300 rounded-full text-sm font-semibold border border-orange-500/50">
+            {photos.filter(p => p.status === 'pending').length} {language === 'en' ? 'Pending' : 'Bekliyor'}
+          </div>
+          <div className="px-4 py-2 bg-green-500/20 text-green-300 rounded-full text-sm font-semibold border border-green-500/50">
+            {photos.filter(p => p.status === 'approved').length} {language === 'en' ? 'Approved' : 'Onaylanmış'}
+          </div>
         </div>
       </div>
 
       <div className="space-y-4">
         {photos.map((photo) => (
-          <div key={photo.id} className="bg-white/10 rounded-xl p-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="w-20 h-20 bg-gray-600 rounded-lg" />
-              <div>
-                <p className="font-semibold">{photo.customerName}</p>
-                <p className="text-sm text-white/60">
-                  {new Date(photo.uploadedAt).toLocaleDateString()}
-                </p>
+          <div key={photo.id} className="bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl p-5 transition-all">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4 flex-1">
+                <div className="w-16 h-16 bg-gradient-to-br from-mardo-yellow/40 to-mardo-purple/40 rounded-lg flex items-center justify-center">
+                  <Camera className="w-8 h-8 text-mardo-yellow" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-lg">{photo.customerName}</p>
+                  <p className="text-sm text-white/60">{photo.email}</p>
+                  <p className="text-xs text-white/40 mt-1">
+                    {new Date(photo.uploadedAt).toLocaleDateString()} {new Date(photo.uploadedAt).toLocaleTimeString()}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                  photo.status === 'approved'
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                    : 'bg-orange-500/20 text-orange-300 border border-orange-500/50'
+                }`}>
+                  {photo.status === 'approved' ? (
+                    <>
+                      <CheckCircle className="w-3 h-3 inline mr-1" />
+                      {language === 'en' ? 'Approved' : 'Onaylandı'}
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-3 h-3 inline mr-1" />
+                      {language === 'en' ? 'Pending' : 'Beklemede'}
+                    </>
+                  )}
+                </span>
+                {photo.featured && (
+                  <span className="px-3 py-1 bg-mardo-yellow/20 text-mardo-yellow rounded-full text-xs font-semibold border border-mardo-yellow/50">
+                    ⭐ {language === 'en' ? 'Featured' : 'Öne Çıkarılmış'}
+                  </span>
+                )}
               </div>
             </div>
-            <div className="flex gap-2">
-              <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                {language === 'en' ? 'Approve' : 'Onayla'}
-              </button>
-              <button className="px-4 py-2 bg-mardo-yellow text-mardo-dark rounded-lg hover:bg-mardo-beige transition-colors">
-                {language === 'en' ? 'Feature' : 'Öne Çıkar'}
-              </button>
-              <button className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
-                {language === 'en' ? 'Reject' : 'Reddet'}
+            <div className="flex gap-2 mt-4 pt-4 border-t border-white/10">
+              {photo.status === 'pending' && (
+                <>
+                  <button className="flex-1 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 border border-green-500/50 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    <CheckCircle className="w-4 h-4" />
+                    {language === 'en' ? 'Approve' : 'Onayla'}
+                  </button>
+                  <button className="flex-1 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-lg transition-colors flex items-center justify-center gap-2">
+                    <XCircle className="w-4 h-4" />
+                    {language === 'en' ? 'Reject' : 'Reddet'}
+                  </button>
+                </>
+              )}
+              {photo.status === 'approved' && (
+                <button className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 border ${
+                  photo.featured
+                    ? 'bg-mardo-yellow/20 text-mardo-yellow border-mardo-yellow/50'
+                    : 'bg-mardo-yellow/10 hover:bg-mardo-yellow/20 text-mardo-yellow/70 border-mardo-yellow/30'
+                }`}>
+                  ⭐ {language === 'en' ? 'Featured' : 'Öne Çıkar'}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OrdersManagementTab({ language }: { language: string }) {
+  const [orders] = useState([
+    { id: 'ORD-001', customer: 'Ali Yıldız', total: 450, status: 'pending', items: 3, date: new Date().toISOString() },
+    { id: 'ORD-002', customer: 'Ayşe Kaya', total: 320, status: 'shipped', items: 2, date: new Date(Date.now() - 86400000).toISOString() },
+    { id: 'ORD-003', customer: 'Mehmet Demir', total: 680, status: 'delivered', items: 5, date: new Date(Date.now() - 172800000).toISOString() },
+  ]);
+
+  return (
+    <div className="text-white">
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-3xl font-bold">
+          {language === 'en' ? '📦 Order Management' : '📦 Sipariş Yönetimi'}
+        </h2>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4 mb-8">
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/30 rounded-xl p-6">
+          <p className="text-blue-400/80 text-sm font-semibold">{language === 'en' ? 'Total Orders' : 'Toplam Siparişler'}</p>
+          <p className="text-4xl font-bold text-blue-300 mt-2">42</p>
+          <p className="text-xs text-blue-400/60 mt-1">{language === 'en' ? 'All time' : 'Her zaman'}</p>
+        </div>
+        <div className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border border-orange-500/30 rounded-xl p-6">
+          <p className="text-orange-400/80 text-sm font-semibold">{language === 'en' ? 'Pending' : 'Beklemede'}</p>
+          <p className="text-4xl font-bold text-orange-300 mt-2">5</p>
+          <p className="text-xs text-orange-400/60 mt-1">{language === 'en' ? 'Need attention' : 'İlgi gerekiyor'}</p>
+        </div>
+        <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 border border-green-500/30 rounded-xl p-6">
+          <p className="text-green-400/80 text-sm font-semibold">{language === 'en' ? 'Revenue' : 'Gelir'}</p>
+          <p className="text-4xl font-bold text-green-300 mt-2">₺12,450</p>
+          <p className="text-xs text-green-400/60 mt-1">{language === 'en' ? 'This month' : 'Bu ay'}</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {orders.map((order) => (
+          <div key={order.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:bg-white/10 transition-all">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="w-12 h-12 bg-mardo-yellow/20 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6 text-mardo-yellow" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold">{order.id}</p>
+                <p className="text-sm text-white/60">{order.customer}</p>
+              </div>
+              <div className="text-center">
+                <p className="font-bold">₺{order.total}</p>
+                <p className="text-xs text-white/50">{order.items} {language === 'en' ? 'items' : 'ürün'}</p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                order.status === 'pending' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50' :
+                order.status === 'shipped' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/50' :
+                'bg-green-500/20 text-green-400 border border-green-500/50'
+              }`}>
+                {order.status === 'pending' ? language === 'en' ? 'Pending' : 'Beklemede' :
+                 order.status === 'shipped' ? language === 'en' ? 'Shipped' : 'Gönderildi' :
+                 language === 'en' ? 'Delivered' : 'Teslim Edildi'}
+              </span>
+              <button className="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+                <Edit className="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -177,124 +324,227 @@ function PhotoModerationTab() {
   );
 }
 
-function OrdersManagementTab() {
-  const { language } = useLanguage();
+function ReservationsManagementTab({ language }: { language: string }) {
+  const [reservations] = useState([
+    { id: 'RES-001', customer: 'Ali Yıldız', date: '2026-05-15', time: '19:30', guests: 4, status: 'confirmed' },
+    { id: 'RES-002', customer: 'Ayşe Kaya', date: '2026-05-16', time: '20:00', guests: 2, status: 'pending' },
+  ]);
+
   return (
     <div className="text-white">
-      <h2 className="text-2xl font-bold mb-6">
-        {language === 'en' ? 'Orders Management' : 'Sipariş Yönetimi'}
-      </h2>
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white/10 rounded-xl p-4">
-          <p className="text-white/60 text-sm">{language === 'en' ? 'Today' : 'Bugün'}</p>
-          <p className="text-3xl font-bold">24</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-4">
-          <p className="text-white/60 text-sm">{language === 'en' ? 'Pending' : 'Bekliyor'}</p>
-          <p className="text-3xl font-bold">5</p>
-        </div>
-        <div className="bg-white/10 rounded-xl p-4">
-          <p className="text-white/60 text-sm">{language === 'en' ? 'Revenue' : 'Gelir'}</p>
-          <p className="text-3xl font-bold">₺1,240</p>
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-3xl font-bold">
+          {language === 'en' ? '📅 Reservation Management' : '📅 Rezervasyon Yönetimi'}
+        </h2>
+        <div className="px-4 py-2 bg-mardo-yellow/20 text-mardo-yellow rounded-full text-sm font-semibold border border-mardo-yellow/50">
+          {reservations.length} {language === 'en' ? 'Reservations' : 'Rezervasyon'}
         </div>
       </div>
-      <p className="text-center text-white/60 mt-8">
-        {language === 'en' ? 'Recent orders will appear here' : 'Son siparişler burada görünecek'}
-      </p>
-    </div>
-  );
-}
 
-function ReservationsManagementTab() {
-  const { language } = useLanguage();
-  return (
-    <div className="text-white">
-      <h2 className="text-2xl font-bold mb-6">
-        {language === 'en' ? 'Reservations' : 'Rezervasyonlar'}
-      </h2>
-      <p className="text-center text-white/60 mt-8">
-        {language === 'en' ? 'No reservations today' : 'Bugün rezervasyon yok'}
-      </p>
-    </div>
-  );
-}
-
-function UsersManagementTab() {
-  const { language } = useLanguage();
-  return (
-    <div className="text-white">
-      <h2 className="text-2xl font-bold mb-6">
-        {language === 'en' ? 'Users' : 'Kullanıcılar'}
-      </h2>
-      <div className="bg-white/10 rounded-xl p-4 mb-4">
-        <p className="text-white/60 text-sm">{language === 'en' ? 'Total Users' : 'Toplam Kullanıcı'}</p>
-        <p className="text-3xl font-bold">156</p>
+      <div className="space-y-3">
+        {reservations.map((res) => (
+          <div key={res.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:bg-white/10 transition-all">
+            <div className="flex items-center gap-4 flex-1">
+              <div className="w-12 h-12 bg-mardo-purple/20 rounded-lg flex items-center justify-center">
+                <Calendar className="w-6 h-6 text-mardo-purple" />
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold">{res.customer}</p>
+                <p className="text-sm text-white/60">{res.date} at {res.time}</p>
+              </div>
+              <div className="text-center">
+                <p className="font-semibold">{res.guests} {language === 'en' ? 'Guests' : 'Misafir'}</p>
+              </div>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                res.status === 'confirmed' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+                'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+              }`}>
+                {res.status === 'confirmed' ? language === 'en' ? 'Confirmed' : 'Onaylandı' : language === 'en' ? 'Pending' : 'Beklemede'}
+              </span>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
-function AnalyticsTab() {
-  const { language } = useLanguage();
+function UsersManagementTab({ language }: { language: string }) {
+  const [users] = useState([
+    { id: '1', email: 'ali@example.com', name: 'Ali Yıldız', role: 'user', joined: '2026-01-15', status: 'active' },
+    { id: '2', email: 'ayse@example.com', name: 'Ayşe Kaya', role: 'user', joined: '2026-02-20', status: 'active' },
+    { id: '3', email: 'mehmet@example.com', name: 'Mehmet Demir', role: 'moderator', joined: '2025-12-10', status: 'active' },
+  ]);
+
   return (
     <div className="text-white">
-      <h2 className="text-2xl font-bold mb-6">
-        {language === 'en' ? 'Analytics' : 'Analitik'}
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-3xl font-bold">
+          {language === 'en' ? '👥 User Management' : '👥 Kullanıcı Yönetimi'}
+        </h2>
+        <div className="px-4 py-2 bg-mardo-purple/20 text-mardo-purple rounded-full text-sm font-semibold border border-mardo-purple/50">
+          {users.length} {language === 'en' ? 'Total' : 'Toplam'}
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-white/10">
+              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'User' : 'Kullanıcı'}</th>
+              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Email' : 'E-posta'}</th>
+              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Role' : 'Rol'}</th>
+              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Status' : 'Durum'}</th>
+              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Actions' : 'İşlemler'}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td className="py-3 px-4 font-semibold">{u.name}</td>
+                <td className="py-3 px-4 text-white/60">{u.email}</td>
+                <td className="py-3 px-4">
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    u.role === 'admin' ? 'bg-mardo-yellow/20 text-mardo-yellow border border-mardo-yellow/50' :
+                    u.role === 'moderator' ? 'bg-mardo-purple/20 text-mardo-purple border border-mardo-purple/50' :
+                    'bg-white/10 text-white/70 border border-white/20'
+                  }`}>
+                    {u.role === 'admin' ? language === 'en' ? 'Admin' : 'Yönetici' :
+                     u.role === 'moderator' ? language === 'en' ? 'Moderator' : 'Moderatör' :
+                     language === 'en' ? 'User' : 'Kullanıcı'}
+                  </span>
+                </td>
+                <td className="py-3 px-4">
+                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-semibold border border-green-500/50">
+                    {language === 'en' ? 'Active' : 'Aktif'}
+                  </span>
+                </td>
+                <td className="py-3 px-4 flex gap-2">
+                  <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+                    <Eye className="w-4 h-4" />
+                  </button>
+                  <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+                    <Edit className="w-4 h-4" />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function AnalyticsTab({ language }: { language: string }) {
+  return (
+    <div className="text-white">
+      <h2 className="text-3xl font-bold mb-8">
+        {language === 'en' ? '📊 Analytics & Reports' : '📊 Analitik ve Raporlar'}
       </h2>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="bg-white/10 rounded-xl p-6">
+
+      <div className="grid grid-cols-2 gap-4 mb-8">
+        <div className="bg-gradient-to-br from-mardo-yellow/10 to-mardo-yellow/5 border border-mardo-yellow/30 rounded-xl p-6">
           <TrendingUp className="w-8 h-8 text-mardo-yellow mb-2" />
           <p className="text-white/60 text-sm">{language === 'en' ? 'Total Revenue' : 'Toplam Gelir'}</p>
-          <p className="text-3xl font-bold">₺45,230</p>
+          <p className="text-3xl font-bold text-mardo-yellow mt-2">₺45,230</p>
         </div>
-        <div className="bg-white/10 rounded-xl p-6">
-          <Package className="w-8 h-8 text-mardo-yellow mb-2" />
-          <p className="text-white/60 text-sm">{language === 'en' ? 'Total Orders' : 'Toplam Sipariş'}</p>
-          <p className="text-3xl font-bold">1,247</p>
+        <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border border-blue-500/30 rounded-xl p-6">
+          <BarChart3 className="w-8 h-8 text-blue-400 mb-2" />
+          <p className="text-white/60 text-sm">{language === 'en' ? 'Monthly Growth' : 'Aylık Büyüme'}</p>
+          <p className="text-3xl font-bold text-blue-300 mt-2">+23%</p>
         </div>
+      </div>
+
+      <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+        <p className="text-white/70">{language === 'en' ? 'Advanced analytics coming soon' : 'Gelişmiş analitik yakında'}</p>
       </div>
     </div>
   );
 }
 
-function NotificationsTab() {
-  const { language } = useLanguage();
+function NotificationsTab({ language }: { language: string }) {
+  const [notifs] = useState([
+    { id: '1', type: 'order', message: 'New order received - ORD-042', time: 'Just now' },
+    { id: '2', type: 'user', message: 'New user registration - ali.yildiz@example.com', time: '5 minutes ago' },
+    { id: '3', type: 'photo', message: 'Photo uploaded for moderation', time: '1 hour ago' },
+  ]);
+
   return (
     <div className="text-white">
-      <h2 className="text-2xl font-bold mb-6">
-        {language === 'en' ? 'Notifications' : 'Bildirimler'}
+      <h2 className="text-3xl font-bold mb-8">
+        {language === 'en' ? '🔔 System Notifications' : '🔔 Sistem Bildirimleri'}
       </h2>
-      <p className="text-center text-white/60 mt-8">
-        {language === 'en' ? 'No new notifications' : 'Yeni bildirim yok'}
-      </p>
+
+      <div className="space-y-3">
+        {notifs.map((n) => (
+          <div key={n.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:bg-white/10 transition-all">
+            <div className="flex items-center gap-4 flex-1">
+              <div className={`w-3 h-3 rounded-full ${
+                n.type === 'order' ? 'bg-blue-400' :
+                n.type === 'user' ? 'bg-green-400' :
+                'bg-mardo-yellow'
+              }`} />
+              <div>
+                <p className="font-semibold">{n.message}</p>
+                <p className="text-sm text-white/50">{n.time}</p>
+              </div>
+            </div>
+            <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-function AdminSettingsTab() {
-  const { language } = useLanguage();
+function AdminSettingsTab({ language }: { language: string }) {
   return (
     <div className="text-white">
-      <h2 className="text-2xl font-bold mb-6">
-        {language === 'en' ? 'Admin Settings' : 'Yönetici Ayarları'}
+      <h2 className="text-3xl font-bold mb-8">
+        {language === 'en' ? '⚙️ Admin Settings' : '⚙️ Yönetici Ayarları'}
       </h2>
+
       <div className="space-y-4">
-        <div className="bg-white/10 rounded-xl p-4">
-          <h3 className="font-semibold mb-2">
-            {language === 'en' ? 'Store Hours' : 'Çalışma Saatleri'}
-          </h3>
-          <p className="text-white/60 text-sm">
-            {language === 'en' ? 'Configure opening and closing times' : 'Açılış ve kapanış saatlerini ayarlayın'}
-          </p>
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-lg">{language === 'en' ? 'Email Notifications' : 'E-posta Bildirimleri'}</p>
+              <p className="text-white/60 text-sm mt-1">{language === 'en' ? 'Receive alerts for important events' : 'Önemli olaylar için uyarı alın'}</p>
+            </div>
+            <input type="checkbox" defaultChecked className="w-6 h-6 cursor-pointer" />
+          </div>
         </div>
-        <div className="bg-white/10 rounded-xl p-4">
-          <h3 className="font-semibold mb-2">
-            {language === 'en' ? 'Delivery Settings' : 'Teslimat Ayarları'}
-          </h3>
-          <p className="text-white/60 text-sm">
-            {language === 'en' ? 'Manage delivery zones and fees' : 'Teslimat bölgelerini ve ücretlerini yönetin'}
-          </p>
+
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-lg">{language === 'en' ? 'Auto-Moderation' : 'Otomatik Moderasyon'}</p>
+              <p className="text-white/60 text-sm mt-1">{language === 'en' ? 'Enable AI-powered content filtering' : 'AI destekli içerik filtrelemeyi etkinleştir'}</p>
+            </div>
+            <input type="checkbox" className="w-6 h-6 cursor-pointer" />
+          </div>
         </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-semibold text-lg">{language === 'en' ? 'Dark Mode' : 'Koyu Mod'}</p>
+              <p className="text-white/60 text-sm mt-1">{language === 'en' ? 'Always enabled for admin panel' : 'Yönetici paneli için her zaman etkin'}</p>
+            </div>
+            <input type="checkbox" defaultChecked disabled className="w-6 h-6 cursor-not-allowed opacity-50" />
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-8 p-6 bg-orange-500/10 border border-orange-500/30 rounded-xl">
+        <p className="text-orange-400 font-semibold">{language === 'en' ? '⚠️ Danger Zone' : '⚠️ Tehlikeli Bölge'}</p>
+        <p className="text-white/60 text-sm mt-2">{language === 'en' ? 'Irreversible actions' : 'Geri alınamaz eylemler'}</p>
+        <button className="mt-4 px-6 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/50 rounded-lg transition-colors">
+          {language === 'en' ? 'Reset All Data' : 'Tüm Verileri Sıfırla'}
+        </button>
       </div>
     </div>
   );

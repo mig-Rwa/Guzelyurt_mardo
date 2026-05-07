@@ -138,6 +138,7 @@ export const UserProfileSchema = z.object({
   displayName: z.string().optional(),
   photoURL: z.string().url().optional(),
   phone: z.string().optional(),
+  role: z.enum(['user', 'admin', 'moderator']).default('user'),
   addresses: z.array(z.object({
     id: z.string(),
     label: z.string(),

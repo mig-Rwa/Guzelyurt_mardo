@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { ok } from '@/lib/server/api';
 import { menuItems } from '@shared';
 
 export async function GET(request: Request) {
@@ -11,9 +11,5 @@ export async function GET(request: Request) {
     items = menuItems.filter(item => item.category === category);
   }
   
-  return NextResponse.json({
-    success: true,
-    data: items,
-    total: items.length,
-  });
+  return ok(items, { meta: { total: items.length } });
 }

@@ -1,9 +1,9 @@
 'use client';
 
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { getAuth, GoogleAuthProvider, Auth, connectAuthEmulator } from 'firebase/auth';
+import { getFirestore, Firestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getStorage, FirebaseStorage, connectStorageEmulator } from 'firebase/storage';
 
 // Safely read environment variables
 const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
@@ -46,6 +46,9 @@ let db: Firestore | null = null;
 let storage: FirebaseStorage | null = null;
 let googleProvider: GoogleAuthProvider | null = null;
 
+// Allow developers to opt into local emulators by setting NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true in .env.local
+const useEmulator = typeof process !== 'undefined' && process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATOR === 'true';
+
 if (isConfigured && firebaseConfig && typeof window !== 'undefined') {
   try {
     app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
@@ -54,6 +57,18 @@ if (isConfigured && firebaseConfig && typeof window !== 'undefined') {
     storage = getStorage(app);
     googleProvider = new GoogleAuthProvider();
     console.log('✅ Firebase initialized successfully');
+    // If requested, connect to local emulators (useful for dev)
+    if (useEmulator) {
+      try {
+        // Default emulator ports: auth=9099, firestore=8080, storage=9199
+        connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
+        connectFirestoreEmulator(db, 'localhost', 8080);
+        connectStorageEmulator(storage, 'localhost', 9199);
+        console.log('🔌 Connected to Firebase emulators');
+      } catch (e) {
+        console.warn('Could not connect to Firebase emulators:', e);
+      }
+    }
   } catch (error) {
     console.error('❌ Firebase initialization error:', error);
     console.warn('⚠️ Running in demo mode without Firebase');

@@ -43,6 +43,9 @@ export type CustomerPhotoCreate = z.infer<typeof CustomerPhotoCreateSchema>;
 // Language type
 export type Language = 'en' | 'tr';
 
+// Role type
+export type UserRole = 'user' | 'admin' | 'moderator';
+
 // Category type
 export type MenuCategory = 
   | 'hotDrinks'

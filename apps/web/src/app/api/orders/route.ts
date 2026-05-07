@@ -1,26 +1,25 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { OrderCreateSchema } from '@shared';
 import { v4 as uuidv4 } from 'uuid';
+import { db } from '@/lib/server/mockDb';
+import { fail, forbidden, getRequestContext, ok } from '@/lib/server/api';
 
 function generateOrderNumber(): string {
   return 'MRD-' + Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
-// In production, this would use Firestore
-const orders: any[] = [];
+type OrderStatus = 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
 
 export async function POST(request: NextRequest) {
   try {
+    const ctx = getRequestContext(request);
     const body = await request.json();
     
     // Validate input
     const validationResult = OrderCreateSchema.safeParse(body);
     if (!validationResult.success) {
       console.error('Validation error:', validationResult.error);
-      return NextResponse.json(
-        { success: false, error: 'Invalid order data' },
-        { status: 400 }
-      );
+      return fail('Invalid order data', 400);
     }
     
     const data = validationResult.data;
@@ -35,39 +34,80 @@ export async function POST(request: NextRequest) {
     const order = {
       id: uuidv4(),
       orderNumber: generateOrderNumber(),
-      userId: 'guest', // Would be from auth token in production
+      userId: ctx.userId,
       items: data.items,
       total,
       orderType: data.orderType,
       paymentMethod: data.paymentMethod,
-      status: 'pending',
+      status: 'pending' as OrderStatus,
       customer: data.customer,
       createdAt: new Date().toISOString(),
       estimatedTime: data.orderType === 'delivery' ? 40 : 20,
     };
     
     // In production: await adminDb.collection('orders').add(order);
-    orders.push(order);
+    db.orders.push(order);
     
-    return NextResponse.json({
-      success: true,
-      orderNumber: order.orderNumber,
-      estimatedTime: order.estimatedTime,
-      data: order,
+    return ok(order, {
+      status: 201,
+      meta: {
+        orderNumber: order.orderNumber,
+        estimatedTime: order.estimatedTime,
+      },
     });
   } catch (error) {
     console.error('Order error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Failed to create order' },
-      { status: 500 }
-    );
+    return fail('Failed to create order', 500);
   }
 }
 
 export async function GET(request: NextRequest) {
-  // In production: verify auth and fetch user's orders from Firestore
-  return NextResponse.json({
-    success: true,
-    data: orders,
-  });
+  const ctx = getRequestContext(request);
+  const { searchParams } = new URL(request.url);
+  const status = searchParams.get('status');
+  const includeAll = searchParams.get('all') === 'true';
+
+  let result = includeAll && ctx.isAdmin
+    ? [...db.orders]
+    : db.orders.filter((o) => o.userId === ctx.userId);
+
+  if (status) {
+    result = result.filter((o) => o.status === status);
+  }
+
+  result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return ok(result, { meta: { total: result.length } });
+}
+
+export async function PATCH(request: NextRequest) {
+  const ctx = getRequestContext(request);
+  if (!ctx.isAdmin) {
+    return forbidden();
+  }
+
+  try {
+    const body = await request.json();
+    const orderId = body?.id as string | undefined;
+    const status = body?.status as OrderStatus | undefined;
+
+    if (!orderId || !status) {
+      return fail('Order id and status are required', 400);
+    }
+
+    const allowed: OrderStatus[] = ['pending', 'preparing', 'ready', 'delivered', 'cancelled'];
+    if (!allowed.includes(status)) {
+      return fail('Invalid status', 400);
+    }
+
+    const existing = db.orders.find((o) => o.id === orderId);
+    if (!existing) {
+      return fail('Order not found', 404);
+    }
+
+    existing.status = status;
+    return ok(existing);
+  } catch (error) {
+    console.error('Order update error:', error);
+    return fail('Failed to update order', 500);
+  }
 }

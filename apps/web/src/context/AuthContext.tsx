@@ -104,6 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: firebaseUser.email!,
                 displayName: firebaseUser.displayName || undefined,
                 photoURL: firebaseUser.photoURL || undefined,
+                role: 'user',
                 language: 'en',
                 createdAt: new Date().toISOString(),
               };
@@ -178,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         uid: demoUser.uid,
         email: email,
         displayName: displayName || email.split('@')[0],
+        role: 'user',
         language: 'en',
         createdAt: new Date().toISOString(),
       };

@@ -1,14 +1,17 @@
 'use client';
 
-import { useState, useEffect, Suspense, lazy } from 'react';
+import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Sparkles, RefreshCw, Coffee } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { fortuneMessages } from '@shared';
 import { Button } from '@/components/ui/button';
 import { getRandomItem, isWebGLSupported } from '@/lib/utils';
 
-// Lazy load 3D component
-const Fortune3D = lazy(() => import('@/components/3d/Fortune3D'));
+const Fortune3D = dynamic(() => import('@/components/3d/Fortune3D'), {
+  ssr: false,
+  loading: () => <div className="h-[200px] w-[200px] bg-mardo-purple/10 animate-pulse rounded-full" />,
+});
 
 export default function FortuneTelling() {
   const { language, t } = useLanguage();
@@ -47,9 +50,7 @@ export default function FortuneTelling() {
             {/* 3D Coffee Cup */}
             {use3D && (
               <div className="hidden md:flex items-center justify-center">
-                <Suspense fallback={<div className="h-[200px] w-[200px] bg-mardo-purple/10 animate-pulse rounded-full" />}>
-                  <Fortune3D isRevealing={isRevealing} />
-                </Suspense>
+                <Fortune3D isRevealing={isRevealing} />
               </div>
             )}
 
