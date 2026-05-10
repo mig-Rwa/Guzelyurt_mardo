@@ -257,3 +257,115 @@ export async function updateUserProfile(userId: string, updates: any) {
     createdAt: doc.data()?.createdAt?.toISOString?.() || doc.data()?.createdAt,
   };
 }
+
+/**
+ * Get all users (admin only)
+ */
+export async function getAllUsers() {
+  const snapshot = await db.collection(COLLECTIONS.USERS).orderBy('createdAt', 'desc').get();
+  return snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data()?.createdAt?.toISOString?.() || doc.data()?.createdAt,
+  })) as any[];
+}
+
+/**
+ * Update user role (admin only)
+ */
+export async function updateUserRole(userId: string, role: 'user' | 'admin' | 'moderator') {
+  const docRef = db.collection(COLLECTIONS.USERS).doc(userId);
+  await docRef.update({ role, updatedAt: new Date() });
+  return getUserProfile(userId);
+}
+
+/**
+ * Get all reservations (admin only)
+ */
+export async function getAllReservations(status?: string) {
+  let query: any = db.collection(COLLECTIONS.RESERVATIONS);
+
+  if (status) {
+    query = query.where('status', '==', status);
+  }
+
+  query = query.orderBy('reservationDate', 'desc');
+  const snapshot = await query.get();
+
+  return snapshot.docs.map((doc: QueryDocumentSnapshot) => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt?.toISOString?.() || doc.data().createdAt,
+    reservationDate: doc.data().reservationDate?.toISOString?.() || doc.data().reservationDate,
+  })) as any[];
+}
+
+/**
+ * Update reservation status
+ */
+export async function updateReservation(
+  reservationId: string,
+  updates: { status?: string; notes?: string }
+) {
+  const docRef = db.collection(COLLECTIONS.RESERVATIONS).doc(reservationId);
+  const doc = await docRef.get();
+
+  if (!doc.exists) {
+    throw new Error('Reservation not found');
+  }
+
+  await docRef.update({
+    ...updates,
+    updatedAt: new Date(),
+  });
+
+  const updated = await docRef.get();
+  return {
+    id: updated.id,
+    ...updated.data(),
+    createdAt: updated.data()?.createdAt?.toISOString?.() || updated.data()?.createdAt,
+    reservationDate: updated.data()?.reservationDate?.toISOString?.() || updated.data()?.reservationDate,
+  };
+}
+
+/**
+ * Delete reservation
+ */
+export async function deleteReservation(reservationId: string) {
+  await db.collection(COLLECTIONS.RESERVATIONS).doc(reservationId).delete();
+}
+
+/**
+ * Create audit log entry
+ */
+export async function createAuditLog(action: string, adminId: string, details: any) {
+  const docRef = db.collection(COLLECTIONS.AUDIT_LOGS).doc();
+  await docRef.set({
+    action,
+    adminId,
+    details,
+    createdAt: new Date(),
+    timestamp: new Date().toISOString(),
+  });
+  return { id: docRef.id };
+}
+
+/**
+ * Get audit logs
+ */
+export async function getAuditLogs(adminId?: string, limit: number = 50) {
+  let query: any = db.collection(COLLECTIONS.AUDIT_LOGS);
+
+  if (adminId) {
+    query = query.where('adminId', '==', adminId);
+  }
+
+  query = query.orderBy('createdAt', 'desc').limit(limit);
+  const snapshot = await query.get();
+
+  return snapshot.docs.map((doc: QueryDocumentSnapshot<any>) => ({
+    id: doc.id,
+    ...doc.data(),
+    createdAt: doc.data().createdAt?.toISOString?.() || doc.data().createdAt,
+  })) as any[];
+}

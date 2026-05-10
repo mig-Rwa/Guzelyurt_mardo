@@ -135,11 +135,11 @@ export default function AdminDashboard() {
               {activeTab === 'photos' && <PhotoModerationTab language={language} />}
               {activeTab === 'orders' && <OrdersManagementTab language={language} user={user} />}
               {activeTab === 'menu' && <MenuManagementTab language={language} user={user} />}
-              {activeTab === 'reservations' && <ReservationsManagementTab language={language} />}
-              {activeTab === 'users' && <UsersManagementTab language={language} />}
+              {activeTab === 'reservations' && <ReservationsManagementTab language={language} user={user} />}
+              {activeTab === 'users' && <UsersManagementTab language={language} user={user} />}
               {activeTab === 'analytics' && <AnalyticsTab language={language} />}
               {activeTab === 'notifications' && <NotificationsTab language={language} />}
-              {activeTab === 'settings' && <AdminSettingsTab language={language} />}
+              {activeTab === 'settings' && <AdminSettingsTab language={language} user={user} />}
             </div>
           </div>
         </div>
@@ -465,11 +465,98 @@ function OrdersManagementTab({ language, user }: { language: string; user: any }
   );
 }
 
-function ReservationsManagementTab({ language }: { language: string }) {
-  const [reservations] = useState([
-    { id: 'RES-001', customer: 'Ali Yıldız', date: '2026-05-15', time: '19:30', guests: 4, status: 'confirmed' },
-    { id: 'RES-002', customer: 'Ayşe Kaya', date: '2026-05-16', time: '20:00', guests: 2, status: 'pending' },
-  ]);
+function ReservationsManagementTab({ language, user }: { language: string; user: any }) {
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionError, setActionError] = useState('');
+  const [updatingId, setUpdatingId] = useState('');
+
+  useEffect(() => {
+    loadReservations();
+  }, []);
+
+  const loadReservations = async () => {
+    setIsLoading(true);
+    setActionError('');
+
+    try {
+      const response = await fetch('/api/reservations?all=true', {
+        headers: {
+          'x-user-id': user?.uid || 'admin',
+          'x-user-email': user?.email || '',
+          'x-user-role': user?.role || 'admin',
+        },
+      });
+
+      const data = await response.json();
+      setReservations(Array.isArray(data.data) ? data.data : []);
+    } catch (error) {
+      setActionError(language === 'en' ? 'Failed to load reservations.' : 'Rezervasyonlar yüklenemedi.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateReservationStatus = async (reservationId: string, status: string) => {
+    setUpdatingId(reservationId);
+    setActionError('');
+
+    try {
+      const response = await fetch('/api/reservations', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.uid || 'admin',
+          'x-user-email': user?.email || '',
+          'x-user-role': user?.role || 'admin',
+        },
+        body: JSON.stringify({
+          id: reservationId,
+          status,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update reservation');
+      }
+
+      await loadReservations();
+    } catch (error) {
+      setActionError(language === 'en' ? 'Could not update reservation.' : 'Rezervasyon güncellenemedi.');
+    } finally {
+      setUpdatingId('');
+    }
+  };
+
+  const deleteReservation = async (reservationId: string) => {
+    if (!confirm(language === 'en' ? 'Delete this reservation?' : 'Bu rezervasyonu silmek istiyor musunuz?')) {
+      return;
+    }
+
+    setUpdatingId(reservationId);
+    setActionError('');
+
+    try {
+      const response = await fetch(`/api/reservations?id=${reservationId}`, {
+        method: 'DELETE',
+        headers: {
+          'x-user-id': user?.uid || 'admin',
+          'x-user-email': user?.email || '',
+          'x-user-role': user?.role || 'admin',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete reservation');
+      }
+
+      await loadReservations();
+    } catch (error) {
+      setActionError(language === 'en' ? 'Could not delete reservation.' : 'Rezervasyon silinemedi.');
+    } finally {
+      setUpdatingId('');
+    }
+  };
 
   return (
     <div className="text-white">
@@ -482,40 +569,136 @@ function ReservationsManagementTab({ language }: { language: string }) {
         </div>
       </div>
 
-      <div className="space-y-3">
-        {reservations.map((res) => (
-          <div key={res.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:bg-white/10 transition-all">
-            <div className="flex items-center gap-4 flex-1">
-              <div className="w-12 h-12 bg-mardo-purple/20 rounded-lg flex items-center justify-center">
-                <Calendar className="w-6 h-6 text-mardo-purple" />
+      {actionError && (
+        <div className="mb-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {actionError}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="text-white/70">{language === 'en' ? 'Loading reservations...' : 'Rezervasyonlar yükleniyor...'}</div>
+      ) : reservations.length === 0 ? (
+        <div className="text-white/70">{language === 'en' ? 'No reservations yet.' : 'Henüz rezervasyon yok.'}</div>
+      ) : (
+        <div className="space-y-3">
+          {reservations.map((res) => (
+            <div key={res.id} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-all">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4 flex-1">
+                  <div className="w-12 h-12 bg-mardo-purple/20 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-6 h-6 text-mardo-purple" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold">{res.customerName || 'Unknown'}</p>
+                    <p className="text-sm text-white/60">{res.email}</p>
+                    <p className="text-xs text-white/40 mt-1">
+                      {new Date(res.reservationDate || '').toLocaleDateString()} at {res.time || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-semibold">{res.guestCount || '?'} {language === 'en' ? 'Guests' : 'Misafir'}</p>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                    res.status === 'confirmed' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+                    res.status === 'cancelled' ? 'bg-red-500/20 text-red-400 border border-red-500/50' :
+                    'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+                  }`}>
+                    {res.status === 'confirmed' ? (language === 'en' ? 'Confirmed' : 'Onaylandı') :
+                     res.status === 'cancelled' ? (language === 'en' ? 'Cancelled' : 'İptal Edildi') :
+                     (language === 'en' ? 'Pending' : 'Beklemede')}
+                  </span>
+                </div>
+                <div className="flex gap-2 ml-4">
+                  {res.status !== 'confirmed' && (
+                    <button
+                      onClick={() => updateReservationStatus(res.id, 'confirmed')}
+                      disabled={updatingId === res.id}
+                      className="px-3 py-2 bg-green-500/20 hover:bg-green-500/30 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      {language === 'en' ? 'Confirm' : 'Onayla'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => deleteReservation(res.id)}
+                    disabled={updatingId === res.id}
+                    className="px-3 py-2 bg-red-500/20 hover:bg-red-500/30 disabled:opacity-50 rounded-lg transition-colors flex items-center gap-2"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    {language === 'en' ? 'Delete' : 'Sil'}
+                  </button>
+                </div>
               </div>
-              <div className="flex-1">
-                <p className="font-semibold">{res.customer}</p>
-                <p className="text-sm text-white/60">{res.date} at {res.time}</p>
-              </div>
-              <div className="text-center">
-                <p className="font-semibold">{res.guests} {language === 'en' ? 'Guests' : 'Misafir'}</p>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                res.status === 'confirmed' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
-                'bg-orange-500/20 text-orange-400 border border-orange-500/50'
-              }`}>
-                {res.status === 'confirmed' ? language === 'en' ? 'Confirmed' : 'Onaylandı' : language === 'en' ? 'Pending' : 'Beklemede'}
-              </span>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function UsersManagementTab({ language }: { language: string }) {
-  const [users] = useState([
-    { id: '1', email: 'ali@example.com', name: 'Ali Yıldız', role: 'user', joined: '2026-01-15', status: 'active' },
-    { id: '2', email: 'ayse@example.com', name: 'Ayşe Kaya', role: 'user', joined: '2026-02-20', status: 'active' },
-    { id: '3', email: 'mehmet@example.com', name: 'Mehmet Demir', role: 'moderator', joined: '2025-12-10', status: 'active' },
-  ]);
+function UsersManagementTab({ language, user }: { language: string; user: any }) {
+  const [users, setUsers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionError, setActionError] = useState('');
+  const [updatingId, setUpdatingId] = useState('');
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    setIsLoading(true);
+    setActionError('');
+
+    try {
+      const response = await fetch('/api/users', {
+        headers: {
+          'x-user-id': user?.uid || 'admin',
+          'x-user-email': user?.email || '',
+          'x-user-role': user?.role || 'admin',
+        },
+      });
+
+      const data = await response.json();
+      setUsers(Array.isArray(data.data) ? data.data : []);
+    } catch (error) {
+      setActionError(language === 'en' ? 'Failed to load users.' : 'Kullanıcılar yüklenemedi.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateUserRole = async (userId: string, newRole: string) => {
+    setUpdatingId(userId);
+    setActionError('');
+
+    try {
+      const response = await fetch('/api/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.uid || 'admin',
+          'x-user-email': user?.email || '',
+          'x-user-role': user?.role || 'admin',
+        },
+        body: JSON.stringify({
+          id: userId,
+          role: newRole,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user role');
+      }
+
+      await loadUsers();
+    } catch (error) {
+      setActionError(language === 'en' ? 'Could not update user role.' : 'Kullanıcı rolü güncellenemedi.');
+    } finally {
+      setUpdatingId('');
+    }
+  };
 
   return (
     <div className="text-white">
@@ -528,51 +711,61 @@ function UsersManagementTab({ language }: { language: string }) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-white/10">
-              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'User' : 'Kullanıcı'}</th>
-              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Email' : 'E-posta'}</th>
-              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Role' : 'Rol'}</th>
-              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Status' : 'Durum'}</th>
-              <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Actions' : 'İşlemler'}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                <td className="py-3 px-4 font-semibold">{u.name}</td>
-                <td className="py-3 px-4 text-white/60">{u.email}</td>
-                <td className="py-3 px-4">
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                    u.role === 'admin' ? 'bg-mardo-yellow/20 text-mardo-yellow border border-mardo-yellow/50' :
-                    u.role === 'moderator' ? 'bg-mardo-purple/20 text-mardo-purple border border-mardo-purple/50' :
-                    'bg-white/10 text-white/70 border border-white/20'
-                  }`}>
-                    {u.role === 'admin' ? language === 'en' ? 'Admin' : 'Yönetici' :
-                     u.role === 'moderator' ? language === 'en' ? 'Moderator' : 'Moderatör' :
-                     language === 'en' ? 'User' : 'Kullanıcı'}
-                  </span>
-                </td>
-                <td className="py-3 px-4">
-                  <span className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-semibold border border-green-500/50">
-                    {language === 'en' ? 'Active' : 'Aktif'}
-                  </span>
-                </td>
-                <td className="py-3 px-4 flex gap-2">
-                  <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                    <Eye className="w-4 h-4" />
-                  </button>
-                  <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
-                    <Edit className="w-4 h-4" />
-                  </button>
-                </td>
+      {actionError && (
+        <div className="mb-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {actionError}
+        </div>
+      )}
+
+      {isLoading ? (
+        <div className="text-white/70">{language === 'en' ? 'Loading users...' : 'Kullanıcılar yükleniyor...'}</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'User' : 'Kullanıcı'}</th>
+                <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Email' : 'E-posta'}</th>
+                <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Role' : 'Rol'}</th>
+                <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Joined' : 'Katıldı'}</th>
+                <th className="text-left py-3 px-4 text-white/70 font-semibold">{language === 'en' ? 'Actions' : 'İşlemler'}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {users.map((u) => (
+                <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
+                  <td className="py-3 px-4 font-semibold">{u.displayName || 'User'}</td>
+                  <td className="py-3 px-4 text-white/60">{u.email}</td>
+                  <td className="py-3 px-4">
+                    <select
+                      value={u.role}
+                      onChange={(e) => updateUserRole(u.id, e.target.value)}
+                      disabled={updatingId === u.id}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold border cursor-pointer disabled:opacity-50 ${
+                        u.role === 'admin' ? 'bg-mardo-yellow/20 text-mardo-yellow border-mardo-yellow/50' :
+                        u.role === 'moderator' ? 'bg-mardo-purple/20 text-mardo-purple border-mardo-purple/50' :
+                        'bg-white/10 text-white/70 border-white/20'
+                      }`}
+                    >
+                      <option value="user">{language === 'en' ? 'User' : 'Kullanıcı'}</option>
+                      <option value="moderator">{language === 'en' ? 'Moderator' : 'Moderatör'}</option>
+                      <option value="admin">{language === 'en' ? 'Admin' : 'Yönetici'}</option>
+                    </select>
+                  </td>
+                  <td className="py-3 px-4 text-white/60 text-sm">
+                    {new Date(u.createdAt).toLocaleDateString()}
+                  </td>
+                  <td className="py-3 px-4 flex gap-2">
+                    <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors" title={language === 'en' ? 'View details' : 'Detayları görüntüle'}>
+                      <Eye className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
@@ -761,12 +954,84 @@ function NotificationsTab({ language }: { language: string }) {
   );
 }
 
-function AdminSettingsTab({ language }: { language: string }) {
+function AdminSettingsTab({ language, user }: { language: string; user: any }) {
+  const [settings, setSettings] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveMessage, setSaveMessage] = useState('');
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/settings', {
+        headers: {
+          'x-user-id': user?.uid || 'admin',
+          'x-user-email': user?.email || '',
+          'x-user-role': user?.role || 'admin',
+        },
+      });
+
+      const data = await response.json();
+      setSettings(data.data || {});
+    } catch (error) {
+      console.error('Failed to load settings:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateSettings = async (key: string, value: any) => {
+    setIsSaving(true);
+    setSaveMessage('');
+
+    try {
+      const updates = { ...settings, [key]: value };
+      const response = await fetch('/api/settings', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.uid || 'admin',
+          'x-user-email': user?.email || '',
+          'x-user-role': user?.role || 'admin',
+        },
+        body: JSON.stringify({ [key]: value }),
+      });
+
+      if (response.ok) {
+        setSettings(updates);
+        setSaveMessage(language === 'en' ? '✓ Settings saved' : '✓ Ayarlar kaydedildi');
+        setTimeout(() => setSaveMessage(''), 3000);
+      }
+    } catch (error) {
+      setSaveMessage(language === 'en' ? '✗ Failed to save' : '✗ Kaydetme başarısız');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return <div className="text-white">{language === 'en' ? 'Loading settings...' : 'Ayarlar yükleniyor...'}</div>;
+  }
+
   return (
     <div className="text-white">
       <h2 className="text-3xl font-bold mb-8">
         {language === 'en' ? '⚙️ Admin Settings' : '⚙️ Yönetici Ayarları'}
       </h2>
+
+      {saveMessage && (
+        <div className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
+          saveMessage.includes('✓') 
+            ? 'border-green-500/40 bg-green-500/10 text-green-200'
+            : 'border-red-500/40 bg-red-500/10 text-red-200'
+        }`}>
+          {saveMessage}
+        </div>
+      )}
 
       <div className="space-y-4">
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
@@ -775,7 +1040,13 @@ function AdminSettingsTab({ language }: { language: string }) {
               <p className="font-semibold text-lg">{language === 'en' ? 'Email Notifications' : 'E-posta Bildirimleri'}</p>
               <p className="text-white/60 text-sm mt-1">{language === 'en' ? 'Receive alerts for important events' : 'Önemli olaylar için uyarı alın'}</p>
             </div>
-            <input type="checkbox" defaultChecked className="w-6 h-6 cursor-pointer" />
+            <input
+              type="checkbox"
+              checked={settings?.emailNotifications || false}
+              onChange={(e) => updateSettings('emailNotifications', e.target.checked)}
+              disabled={isSaving}
+              className="w-6 h-6 cursor-pointer disabled:opacity-50"
+            />
           </div>
         </div>
 
@@ -785,17 +1056,53 @@ function AdminSettingsTab({ language }: { language: string }) {
               <p className="font-semibold text-lg">{language === 'en' ? 'Auto-Moderation' : 'Otomatik Moderasyon'}</p>
               <p className="text-white/60 text-sm mt-1">{language === 'en' ? 'Enable AI-powered content filtering' : 'AI destekli içerik filtrelemeyi etkinleştir'}</p>
             </div>
-            <input type="checkbox" className="w-6 h-6 cursor-pointer" />
+            <input
+              type="checkbox"
+              checked={settings?.autoModeration || false}
+              onChange={(e) => updateSettings('autoModeration', e.target.checked)}
+              disabled={isSaving}
+              className="w-6 h-6 cursor-pointer disabled:opacity-50"
+            />
           </div>
         </div>
 
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-semibold text-lg">{language === 'en' ? 'Dark Mode' : 'Koyu Mod'}</p>
-              <p className="text-white/60 text-sm mt-1">{language === 'en' ? 'Always enabled for admin panel' : 'Yönetici paneli için her zaman etkin'}</p>
+          <div>
+            <p className="font-semibold text-lg">{language === 'en' ? 'Business Hours' : 'İş Saatleri'}</p>
+            <p className="text-white/60 text-sm mt-1">{language === 'en' ? 'Set restaurant opening and closing times' : 'Restoranın açılış ve kapanış saatlerini ayarlayın'}</p>
+            <div className="flex gap-4 mt-4">
+              <div className="flex-1">
+                <label className="text-white/70 text-sm">{language === 'en' ? 'Open at' : 'Açılış'}</label>
+                <input
+                  type="time"
+                  value={settings?.businessHours?.open || '09:00'}
+                  onChange={(e) => updateSettings('businessHours', { ...settings?.businessHours, open: e.target.value })}
+                  className="w-full mt-2 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-white/70 text-sm">{language === 'en' ? 'Close at' : 'Kapanış'}</label>
+                <input
+                  type="time"
+                  value={settings?.businessHours?.close || '22:00'}
+                  onChange={(e) => updateSettings('businessHours', { ...settings?.businessHours, close: e.target.value })}
+                  className="w-full mt-2 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
+                />
+              </div>
             </div>
-            <input type="checkbox" defaultChecked disabled className="w-6 h-6 cursor-not-allowed opacity-50" />
+          </div>
+        </div>
+
+        <div className="bg-white/5 border border-white/10 rounded-xl p-6">
+          <div>
+            <p className="font-semibold text-lg">{language === 'en' ? 'Minimum Order Value' : 'Minimum Sipariş Değeri'}</p>
+            <p className="text-white/60 text-sm mt-1">{language === 'en' ? 'Minimum amount required to place an order' : 'Sipariş vermek için gereken minimum tutar'}</p>
+            <input
+              type="number"
+              value={settings?.minOrderValue || 50}
+              onChange={(e) => updateSettings('minOrderValue', parseFloat(e.target.value))}
+              className="w-full mt-2 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white"
+            />
           </div>
         </div>
       </div>

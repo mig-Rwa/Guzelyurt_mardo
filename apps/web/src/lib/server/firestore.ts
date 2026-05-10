@@ -44,6 +44,8 @@ export const COLLECTIONS = {
   RESERVATIONS: 'reservations',
   PHOTOS: 'photos',
   SUBSCRIBERS: 'subscribers',
+  AUDIT_LOGS: 'auditLogs',
+  ADMIN_SETTINGS: 'adminSettings',
 };
 
 /**
