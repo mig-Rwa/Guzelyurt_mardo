@@ -85,6 +85,7 @@ export default function DailySpecials() {
                     image: special.image,
                     category: 'specials',
                     available: true,
+                    stock: 50,
                   })
                 }
                 className="w-full mt-4 rounded-xl py-2.5"

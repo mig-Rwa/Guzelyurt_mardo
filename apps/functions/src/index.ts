@@ -98,8 +98,8 @@ export const webhookHandler = functions
       return;
     }
 
-    // Get webhook secret from environment
-    const webhookSecret = process.env.WEBHOOK_SECRET || 'mardo-webhook-secret';
+    // Note: Webhook secret would normally be used for HMAC verification
+    // const webhookSecret = process.env.WEBHOOK_SECRET || 'mardo-webhook-secret';
 
     // Verify signature (example implementation)
     const signature = req.headers['x-webhook-signature'] as string;
@@ -111,21 +111,8 @@ export const webhookHandler = functions
       return;
     }
 
-    // Simple signature verification (in production, use HMAC-SHA256)
-    const expectedSignature = `${webhookSecret}-${timestamp}`;
-    const crypto = require('crypto');
-    const computedSignature = crypto
-      .createHmac('sha256', webhookSecret)
-      .update(JSON.stringify(req.body) + timestamp)
-      .digest('hex');
-
-    // For demo purposes, we'll accept any properly formatted request
-    // In production, uncomment the signature check:
-    // if (signature !== computedSignature) {
-    //   functions.logger.warn('Invalid webhook signature');
-    //   res.status(401).send('Unauthorized');
-    //   return;
-    // }
+    // Simple signature verification is intentionally disabled here.
+    // In production, use an HMAC-SHA256 check against the shared secret.
 
     try {
       const payload = req.body;

@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             uid: demoUser.uid,
             email: demoUser.email,
             displayName: demoUser.displayName,
+            role: 'user',
             language: 'en',
             createdAt: new Date().toISOString(),
           });
@@ -147,6 +148,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           uid: 'demo-user',
           email: email,
           displayName: email.split('@')[0],
+          role: 'user',
           language: 'en',
           createdAt: new Date().toISOString(),
         };
@@ -204,6 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       uid: result.user.uid,
       email: result.user.email!,
       displayName: displayName || undefined,
+      role: 'user',
       language: 'en',
       createdAt: new Date().toISOString(),
     };
@@ -233,6 +236,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: result.user.email!,
         displayName: result.user.displayName || undefined,
         photoURL: result.user.photoURL || undefined,
+        role: 'user',
         language: 'en',
         createdAt: new Date().toISOString(),
       };

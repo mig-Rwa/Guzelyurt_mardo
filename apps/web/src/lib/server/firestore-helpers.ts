@@ -4,6 +4,7 @@
 
 import { db, COLLECTIONS, seedCollectionIfEmpty } from './firestore';
 import type { Order, MenuItem } from '@shared';
+import type { QueryDocumentSnapshot } from 'firebase-admin/firestore';
 import { menuItems as staticMenuItems } from '@shared';
 
 type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
@@ -38,7 +39,7 @@ export async function getOrders(userId: string, isAdmin: boolean, status?: strin
   query = query.orderBy('createdAt', 'desc');
 
   const snapshot = await query.get();
-  return snapshot.docs.map(doc => ({
+  return snapshot.docs.map((doc: QueryDocumentSnapshot) => ({
     id: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toISOString?.() || doc.data().createdAt,
@@ -208,7 +209,7 @@ export async function getReservations(userId?: string) {
   query = query.orderBy('reservationDate', 'desc');
   const snapshot = await query.get();
 
-  return snapshot.docs.map(doc => ({
+  return snapshot.docs.map((doc: QueryDocumentSnapshot) => ({
     id: doc.id,
     ...doc.data(),
     createdAt: doc.data().createdAt?.toISOString?.() || doc.data().createdAt,

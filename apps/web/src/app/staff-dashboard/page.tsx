@@ -7,8 +7,10 @@ import { useRouter } from 'next/navigation';
 import { LogOut, ChefHat, Package } from 'lucide-react';
 import type { Order } from '@shared';
 
+type OrderStatus = Order['status'];
+
 export default function StaffDashboard() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const { language, t } = useLanguage();
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
@@ -19,20 +21,22 @@ export default function StaffDashboard() {
   const userRole = (user as any)?.role || 'user';
   const hasStaffAccess = userRole === 'admin' || userRole === 'moderator' || userRole === 'staff';
 
-  if (!user) {
-    router.push('/auth/login');
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+      return;
+    }
 
-  if (!hasStaffAccess) {
-    router.push('/dashboard');
-    return null;
-  }
+    if (!loading && user && !hasStaffAccess) {
+      router.replace('/dashboard');
+    }
+  }, [loading, user, hasStaffAccess, router]);
 
   // Load orders
   useEffect(() => {
+    if (loading || !user || !hasStaffAccess) return;
     loadOrders();
-  }, []);
+  }, [loading, user, hasStaffAccess]);
 
   const loadOrders = async () => {
     setIsLoading(true);
@@ -56,7 +60,7 @@ export default function StaffDashboard() {
     }
   };
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
+  const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     setActionError('');
 
     try {
@@ -94,15 +98,15 @@ export default function StaffDashboard() {
     router.push('/');
   };
 
-  const statusColumns = [
+  const statusColumns: Array<{ id: OrderStatus; label: string; color: string }> = [
     { id: 'pending', label: language === 'en' ? 'Pending Payment' : 'Ödeme Bekleniyor', color: 'bg-yellow-500' },
-    { id: 'confirmed', label: language === 'en' ? 'Ready to Prepare' : 'Hazırlanmaya Hazır', color: 'bg-blue-500' },
     { id: 'preparing', label: language === 'en' ? 'Preparing' : 'Hazırlanıyor', color: 'bg-purple-500' },
     { id: 'ready', label: language === 'en' ? 'Ready' : 'Hazır', color: 'bg-green-500' },
-    { id: 'completed', label: language === 'en' ? 'Completed' : 'Tamamlandı', color: 'bg-gray-500' },
+    { id: 'delivered', label: language === 'en' ? 'Delivered' : 'Teslim Edildi', color: 'bg-blue-500' },
+    { id: 'cancelled', label: language === 'en' ? 'Cancelled' : 'İptal Edildi', color: 'bg-gray-500' },
   ];
 
-  const getOrdersForStatus = (status: string) => {
+  const getOrdersForStatus = (status: OrderStatus) => {
     return orders.filter((order) => order.status === status);
   };
 
@@ -124,7 +128,7 @@ export default function StaffDashboard() {
                 <h1 className="text-3xl font-bold bg-gradient-to-r from-mardo-yellow to-mardo-beige bg-clip-text text-transparent">
                   {language === 'en' ? 'Staff Kitchen Board' : 'Personel Mutfak Panosu'}
                 </h1>
-                <p className="text-mardo-yellow/80 text-sm">{user.email}</p>
+                <p className="text-mardo-yellow/80 text-sm">{user?.email}</p>
               </div>
             </div>
             <button

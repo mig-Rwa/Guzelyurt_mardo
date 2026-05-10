@@ -29,7 +29,7 @@ import MenuManagementTab from '@/components/admin/MenuManagementTab';
 type TabType = 'photos' | 'orders' | 'reservations' | 'users' | 'menu' | 'analytics' | 'notifications' | 'settings';
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const { language } = useLanguage();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('photos');
@@ -38,13 +38,18 @@ export default function AdminDashboard() {
   const userRole = (user as any)?.role || 'user';
   const hasAdminAccess = userRole === 'admin';
 
-  if (!user) {
-    router.push('/auth/login');
-    return null;
-  }
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+      return;
+    }
 
-  if (!hasAdminAccess) {
-    router.push('/dashboard');
+    if (!loading && user && !hasAdminAccess) {
+      router.replace('/dashboard');
+    }
+  }, [loading, user, hasAdminAccess, router]);
+
+  if (loading || !user || !hasAdminAccess) {
     return null;
   }
 

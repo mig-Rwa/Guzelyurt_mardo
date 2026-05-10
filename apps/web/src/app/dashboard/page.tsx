@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useRouter } from 'next/navigation';
@@ -10,14 +10,18 @@ import Image from 'next/image';
 type TabType = 'photos' | 'orders' | 'loyalty' | 'addresses' | 'reservations' | 'favorites' | 'settings';
 
 export default function UserDashboard() {
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const { language } = useLanguage();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('photos');
 
-  // Redirect if not logged in
-  if (!user) {
-    router.push('/auth/login');
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/auth/login');
+    }
+  }, [loading, user, router]);
+
+  if (loading || !user) {
     return null;
   }
 
