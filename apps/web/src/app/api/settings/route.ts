@@ -4,7 +4,7 @@ import { createAuditLog } from '@/lib/server/firestore-helpers';
 import { fail, forbidden, getRequestContext, ok } from '@/lib/server/api';
 
 export async function GET(request: NextRequest) {
-  const ctx = getRequestContext(request);
+  const ctx = await getRequestContext(request);
   if (!ctx.isAdmin) {
     return forbidden();
   }
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const ctx = getRequestContext(request);
+  const ctx = await getRequestContext(request);
   if (!ctx.isAdmin) {
     return forbidden();
   }

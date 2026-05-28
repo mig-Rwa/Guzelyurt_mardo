@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useRouter } from 'next/navigation';
 import { LogOut, ChefHat, Package } from 'lucide-react';
+import { getAuthHeaders } from '@/lib/client/authHeaders';
 import type { Order } from '@shared';
 
 type OrderStatus = Order['status'];
@@ -36,6 +37,7 @@ export default function StaffDashboard() {
   useEffect(() => {
     if (loading || !user || !hasStaffAccess) return;
     loadOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user, hasStaffAccess]);
 
   const loadOrders = async () => {
@@ -44,11 +46,7 @@ export default function StaffDashboard() {
 
     try {
       const response = await fetch('/api/orders?all=true', {
-        headers: {
-          'x-user-id': user?.uid || '',
-          'x-user-email': user?.email || '',
-          'x-user-role': userRole,
-        },
+        headers: await getAuthHeaders(user),
       });
 
       const data = await response.json();
@@ -66,12 +64,7 @@ export default function StaffDashboard() {
     try {
       const response = await fetch('/api/orders', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.uid || '',
-          'x-user-email': user?.email || '',
-          'x-user-role': userRole,
-        },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify({
           id: orderId,
           status: newStatus,

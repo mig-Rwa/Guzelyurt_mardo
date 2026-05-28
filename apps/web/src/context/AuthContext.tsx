@@ -17,7 +17,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName?: string) => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
+  signInWithGoogle: () => Promise<User | void>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
@@ -227,6 +227,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { signInWithPopup } = await import('firebase/auth');
     
     const result = await signInWithPopup(auth, googleProvider);
+    const signedInUser: User = {
+      uid: result.user.uid,
+      email: result.user.email,
+      displayName: result.user.displayName,
+      photoURL: result.user.photoURL,
+    };
     
     // Create/update profile in localStorage
     let profile = getProfileFromStorage(result.user.uid);
@@ -243,6 +249,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       saveProfileToStorage(profile);
     }
     setUserProfile(profile);
+    return signedInUser;
   }, []);
 
   const logout = useCallback(async () => {

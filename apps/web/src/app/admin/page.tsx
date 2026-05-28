@@ -23,20 +23,30 @@ import {
   Edit,
   Link as LinkIcon,
   Utensils,
+  DollarSign,
+  Clock,
+  Activity,
+  ChefHat,
+  ArrowUpRight,
+  Sparkles,
+  Globe2,
 } from 'lucide-react';
 import MenuManagementTab from '@/components/admin/MenuManagementTab';
+import { getAuthHeaders } from '@/lib/client/authHeaders';
 
-type TabType = 'photos' | 'orders' | 'reservations' | 'users' | 'menu' | 'analytics' | 'notifications' | 'settings';
+type TabType = 'overview' | 'photos' | 'orders' | 'reservations' | 'users' | 'menu' | 'analytics' | 'notifications' | 'settings';
 
 export default function AdminDashboard() {
-  const { user, loading, logout } = useAuth();
-  const { language } = useLanguage();
+  const { user, userProfile, loading, logout } = useAuth();
+  const { language, setLanguage } = useLanguage();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<TabType>('photos');
+  const [activeTab, setActiveTab] = useState<TabType>('overview');
 
-  // Check if user has admin role
-  const userRole = (user as any)?.role || 'user';
-  const hasAdminAccess = userRole === 'admin';
+  // Check if user has admin role. Firebase user objects do not carry the app role;
+  // the role lives on the local user profile, so prefer that before falling back.
+  const userRole = (userProfile as any)?.role || (user as any)?.role || 'user';
+  const ownerEmail = 'miguelmbabatunga31@gmail.com';
+  const hasAdminAccess = userRole === 'admin' || user?.email?.toLowerCase() === ownerEmail;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -54,11 +64,12 @@ export default function AdminDashboard() {
   }
 
   const tabs = [
-    { id: 'photos' as TabType, icon: Camera, label: language === 'en' ? 'Photo Moderation' : 'Fotoğraf Moderasyonu' },
+    { id: 'overview' as TabType, icon: BarChart3, label: language === 'en' ? 'Overview' : 'Genel Bakış' },
     { id: 'orders' as TabType, icon: Package, label: language === 'en' ? 'Orders' : 'Siparişler' },
     { id: 'menu' as TabType, icon: Utensils, label: language === 'en' ? 'Menu' : 'Menü' },
     { id: 'reservations' as TabType, icon: Calendar, label: language === 'en' ? 'Reservations' : 'Rezervasyonlar' },
-    { id: 'users' as TabType, icon: Users, label: language === 'en' ? 'Users' : 'Kullanıcılar' },
+    { id: 'users' as TabType, icon: Users, label: language === 'en' ? 'Customers' : 'Müşteriler' },
+    { id: 'photos' as TabType, icon: Camera, label: language === 'en' ? 'Photo Moderation' : 'Fotoğraf Moderasyonu' },
     { id: 'analytics' as TabType, icon: TrendingUp, label: language === 'en' ? 'Analytics' : 'Analitik' },
     { id: 'notifications' as TabType, icon: Bell, label: language === 'en' ? 'Notifications' : 'Bildirimler' },
     { id: 'settings' as TabType, icon: Settings, label: language === 'en' ? 'Settings' : 'Ayarlar' },
@@ -80,13 +91,45 @@ export default function AdminDashboard() {
                 <Shield className="w-7 h-7 text-mardo-dark" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-mardo-yellow to-mardo-beige bg-clip-text text-transparent">
-                  {language === 'en' ? 'Admin Control Center' : 'Yönetici Kontrol Merkezi'}
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-mardo-beige to-mardo-yellow bg-clip-text text-transparent">
+                  {language === 'en' ? 'Mardo Admin Command Center' : 'Mardo Yönetici Komuta Merkezi'}
                 </h1>
-                <p className="text-mardo-yellow/80 text-sm">{user.email}</p>
+                <p className="text-mardo-yellow/80 text-sm">{user.email} · {language === 'en' ? 'Owner operations' : 'İşletme operasyonları'}</p>
               </div>
             </div>
             <div className="flex items-center gap-4">
+              <div className="hidden items-center gap-2 rounded-2xl border border-white/15 bg-white/10 p-1 sm:flex">
+                <button
+                  onClick={() => setLanguage('en')}
+                  className={`rounded-xl px-3 py-2 text-xs font-bold transition ${
+                    language === 'en'
+                      ? 'bg-mardo-yellow text-mardo-dark shadow-lg shadow-mardo-yellow/20'
+                      : 'text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}
+                  aria-pressed={language === 'en'}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setLanguage('tr')}
+                  className={`rounded-xl px-3 py-2 text-xs font-bold transition ${
+                    language === 'tr'
+                      ? 'bg-mardo-yellow text-mardo-dark shadow-lg shadow-mardo-yellow/20'
+                      : 'text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}
+                  aria-pressed={language === 'tr'}
+                >
+                  TR
+                </button>
+              </div>
+              <button
+                onClick={() => setLanguage(language === 'en' ? 'tr' : 'en')}
+                className="flex items-center gap-2 rounded-xl border border-mardo-yellow/30 bg-mardo-yellow/10 px-4 py-2 text-sm font-semibold text-mardo-yellow transition hover:bg-mardo-yellow/20"
+                title={language === 'en' ? 'Translate admin portal to Turkish' : 'Yönetici portalını İngilizceye çevir'}
+              >
+                <Globe2 className="h-4 w-4" />
+                {language === 'en' ? 'Türkçe' : 'English'}
+              </button>
               <LinkIcon className="w-5 h-5 text-mardo-yellow" />
               <button
                 onClick={handleLogout}
@@ -131,15 +174,16 @@ export default function AdminDashboard() {
 
           {/* Content Area */}
           <div className="md:col-span-3">
-            <div className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl rounded-2xl shadow-2xl p-8 min-h-[600px] border border-white/20">
+            <div className="bg-gradient-to-br from-white/10 via-white/[0.06] to-white/[0.03] backdrop-blur-xl rounded-3xl shadow-2xl p-8 min-h-[640px] border border-white/20">
+              {activeTab === 'overview' && <OverviewTab language={language} user={user} onSelectTab={setActiveTab} />}
               {activeTab === 'photos' && <PhotoModerationTab language={language} />}
               {activeTab === 'orders' && <OrdersManagementTab language={language} user={user} />}
               {activeTab === 'menu' && <MenuManagementTab language={language} user={user} />}
               {activeTab === 'reservations' && <ReservationsManagementTab language={language} user={user} />}
               {activeTab === 'users' && <UsersManagementTab language={language} user={user} />}
-              {activeTab === 'analytics' && <AnalyticsTab language={language} />}
+              {activeTab === 'analytics' && <AnalyticsTab language={language} user={user} />}
               {activeTab === 'notifications' && <NotificationsTab language={language} />}
-              {activeTab === 'settings' && <AdminSettingsTab language={language} user={user} />}
+              {activeTab === 'settings' && <AdminSettingsTab language={language} setLanguage={setLanguage} user={user} />}
             </div>
           </div>
         </div>
@@ -149,6 +193,269 @@ export default function AdminDashboard() {
 }
 
 // ===== ADMIN TAB COMPONENTS =====
+
+type OverviewStats = {
+  totalRevenue: number;
+  todayRevenue: number;
+  totalOrders: number;
+  todayOrders: number;
+  pendingPayments: number;
+  pendingPrep: number;
+  reservationsToday: number;
+  upcomingReservations: number;
+  customers: number;
+  lowStock: number;
+  recentOrders: any[];
+  lowStockItems: any[];
+};
+
+function OverviewTab({
+  language,
+  user,
+  onSelectTab,
+}: {
+  language: string;
+  user: any;
+  onSelectTab: (tab: TabType) => void;
+}) {
+  const [stats, setStats] = useState<OverviewStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadOverview = async () => {
+      setIsLoading(true);
+
+      try {
+        const headers = await getAuthHeaders(user);
+        const [ordersResult, reservationsResult, menuResult, usersResult] = await Promise.allSettled([
+          fetch('/api/orders?all=true', { headers }).then((res) => res.json()),
+          fetch('/api/reservations?all=true', { headers }).then((res) => res.json()),
+          fetch('/api/menu').then((res) => res.json()),
+          fetch('/api/users', { headers }).then((res) => res.json()),
+        ]);
+
+        if (!active) return;
+
+        const orders = ordersResult.status === 'fulfilled' && Array.isArray(ordersResult.value.data) ? ordersResult.value.data : [];
+        const reservations = reservationsResult.status === 'fulfilled' && Array.isArray(reservationsResult.value.data) ? reservationsResult.value.data : [];
+        const menuItems = menuResult.status === 'fulfilled' && Array.isArray(menuResult.value.data) ? menuResult.value.data : [];
+        const users = usersResult.status === 'fulfilled' && Array.isArray(usersResult.value.data) ? usersResult.value.data : [];
+
+        const today = new Date().toDateString();
+        const isToday = (value?: string) => Boolean(value) && new Date(value as string).toDateString() === today;
+        const verifiedOrders = orders.filter((order: any) => order.paymentStatus === 'verified');
+        const todayVerifiedOrders = verifiedOrders.filter((order: any) => isToday(order.createdAt));
+        const lowStockItems = menuItems.filter((item: any) => Number(item.stock ?? 0) <= 5 || item.available === false);
+
+        setStats({
+          totalRevenue: verifiedOrders.reduce((sum: number, order: any) => sum + Number(order.total || 0), 0),
+          todayRevenue: todayVerifiedOrders.reduce((sum: number, order: any) => sum + Number(order.total || 0), 0),
+          totalOrders: orders.length,
+          todayOrders: orders.filter((order: any) => isToday(order.createdAt)).length,
+          pendingPayments: orders.filter((order: any) => order.paymentStatus === 'pending').length,
+          pendingPrep: orders.filter((order: any) => ['pending', 'preparing', 'ready'].includes(order.status)).length,
+          reservationsToday: reservations.filter((reservation: any) => isToday(reservation.reservationDate)).length,
+          upcomingReservations: reservations.filter((reservation: any) => reservation.status !== 'cancelled').length,
+          customers: users.length,
+          lowStock: lowStockItems.length,
+          recentOrders: orders.slice(0, 4),
+          lowStockItems: lowStockItems.slice(0, 4),
+        });
+      } finally {
+        if (active) setIsLoading(false);
+      }
+    };
+
+    loadOverview();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  const metricCards = [
+    {
+      label: language === 'en' ? 'Today Revenue' : 'Bugünkü Gelir',
+      value: `₺${(stats?.todayRevenue || 0).toFixed(2)}`,
+      detail: language === 'en' ? `${stats?.todayOrders || 0} orders today` : `Bugün ${stats?.todayOrders || 0} sipariş`,
+      icon: DollarSign,
+      accent: 'from-emerald-400/25 to-emerald-500/5 text-emerald-300 border-emerald-400/30',
+    },
+    {
+      label: language === 'en' ? 'Pending Payments' : 'Bekleyen Ödemeler',
+      value: String(stats?.pendingPayments || 0),
+      detail: language === 'en' ? 'Need owner verification' : 'Yönetici onayı bekliyor',
+      icon: AlertCircle,
+      accent: 'from-amber-300/25 to-amber-500/5 text-amber-200 border-amber-300/30',
+    },
+    {
+      label: language === 'en' ? 'Live Kitchen Queue' : 'Canlı Mutfak Sırası',
+      value: String(stats?.pendingPrep || 0),
+      detail: language === 'en' ? 'Open order workflow' : 'Açık sipariş akışı',
+      icon: ChefHat,
+      accent: 'from-violet-400/25 to-violet-500/5 text-violet-200 border-violet-300/30',
+    },
+    {
+      label: language === 'en' ? 'Reservations Today' : 'Bugünkü Rezervasyonlar',
+      value: String(stats?.reservationsToday || 0),
+      detail: language === 'en' ? `${stats?.upcomingReservations || 0} active bookings` : `${stats?.upcomingReservations || 0} aktif rezervasyon`,
+      icon: Calendar,
+      accent: 'from-sky-400/25 to-sky-500/5 text-sky-200 border-sky-300/30',
+    },
+  ];
+
+  const quickActions = [
+    { tab: 'orders' as TabType, icon: Package, label: language === 'en' ? 'Verify payments' : 'Ödemeleri onayla', detail: language === 'en' ? 'Review manual order payments' : 'Manuel sipariş ödemelerini incele' },
+    { tab: 'menu' as TabType, icon: Utensils, label: language === 'en' ? 'Update menu' : 'Menüyü güncelle', detail: language === 'en' ? 'Prices, stock, availability' : 'Fiyat, stok, kullanılabilirlik' },
+    { tab: 'reservations' as TabType, icon: Clock, label: language === 'en' ? 'Confirm bookings' : 'Rezervasyonları onayla', detail: language === 'en' ? 'Today and upcoming tables' : 'Bugünkü ve yaklaşan masalar' },
+    { tab: 'analytics' as TabType, icon: TrendingUp, label: language === 'en' ? 'View reports' : 'Raporları görüntüle', detail: language === 'en' ? 'Revenue and product movement' : 'Gelir ve ürün hareketleri' },
+  ];
+
+  if (isLoading) {
+    return <div className="text-white/70">{language === 'en' ? 'Loading command center...' : 'Komuta merkezi yükleniyor...'}</div>;
+  }
+
+  return (
+    <div className="text-white space-y-8">
+      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-mardo-yellow/20 via-white/[0.06] to-white/[0.02] p-8">
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-mardo-yellow/20 blur-3xl" />
+        <div className="absolute right-24 bottom-0 h-32 w-32 rounded-full bg-mardo-purple/20 blur-3xl" />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-mardo-yellow/30 bg-mardo-yellow/10 px-3 py-1 text-sm font-semibold text-mardo-yellow">
+              <Sparkles className="h-4 w-4" />
+              {language === 'en' ? 'Executive overview' : 'Yönetici özeti'}
+            </div>
+            <h2 className="text-4xl font-bold tracking-tight">
+              {language === 'en' ? 'Today at Mardo Café' : 'Bugün Mardo Café'}
+            </h2>
+            <p className="mt-3 max-w-2xl text-white/60">
+              {language === 'en'
+                ? 'A polished operations view for payments, kitchen flow, reservations, inventory and customer activity.'
+                : 'Ödemeler, mutfak akışı, rezervasyonlar, stok ve müşteri hareketleri için zarif operasyon görünümü.'}
+            </p>
+          </div>
+          <button
+            onClick={() => onSelectTab('orders')}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-mardo-yellow px-5 py-3 font-semibold text-mardo-dark shadow-lg shadow-mardo-yellow/20 transition hover:bg-mardo-beige"
+          >
+            {language === 'en' ? 'Open orders' : 'Siparişleri aç'}
+            <ArrowUpRight className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {metricCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <div key={card.label} className={`rounded-2xl border bg-gradient-to-br ${card.accent} p-5 shadow-xl`}>
+              <div className="mb-5 flex items-center justify-between">
+                <div className="rounded-xl border border-white/10 bg-black/20 p-2">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <Activity className="h-4 w-4 opacity-40" />
+              </div>
+              <p className="text-sm font-semibold text-white/55">{card.label}</p>
+              <p className="mt-2 text-3xl font-bold text-white">{card.value}</p>
+              <p className="mt-1 text-xs text-white/45">{card.detail}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="grid gap-6 xl:grid-cols-3">
+        <div className="xl:col-span-2 rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold">{language === 'en' ? 'Priority actions' : 'Öncelikli işlemler'}</h3>
+              <p className="text-sm text-white/50">{language === 'en' ? 'Fast paths to the work admins do most.' : 'Yöneticilerin en çok yaptığı işler için hızlı yollar.'}</p>
+            </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <button
+                  key={action.tab}
+                  onClick={() => onSelectTab(action.tab)}
+                  className="group rounded-2xl border border-white/10 bg-black/20 p-4 text-left transition hover:border-mardo-yellow/40 hover:bg-mardo-yellow/10"
+                >
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className="rounded-xl bg-white/10 p-2 text-mardo-yellow">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 text-white/30 transition group-hover:text-mardo-yellow" />
+                  </div>
+                  <p className="font-semibold">{action.label}</p>
+                  <p className="mt-1 text-sm text-white/45">{action.detail}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+          <h3 className="text-xl font-bold">{language === 'en' ? 'Inventory watch' : 'Stok takibi'}</h3>
+          <p className="mb-5 text-sm text-white/50">{stats?.lowStock || 0} {language === 'en' ? 'items need attention' : 'öğe ilgi bekliyor'}</p>
+          <div className="space-y-3">
+            {(stats?.lowStockItems || []).length === 0 ? (
+              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 p-4 text-sm text-emerald-200">
+                {language === 'en' ? 'All visible menu stock looks healthy.' : 'Görünen menü stokları sağlıklı.'}
+              </div>
+            ) : (
+              stats?.lowStockItems.map((item: any) => (
+                <div key={item.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-3">
+                  <div>
+                    <p className="font-semibold">{item.name?.[language as 'en' | 'tr'] || item.name?.en || (language === 'en' ? 'Menu item' : 'Menü öğesi')}</p>
+                    <p className="text-xs text-white/45">{item.category}</p>
+                  </div>
+                  <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-200">
+                    {item.available === false ? (language === 'en' ? 'Off' : 'Kapalı') : language === 'en' ? `${item.stock ?? 0} left` : `${item.stock ?? 0} kaldı`}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6">
+        <div className="mb-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold">{language === 'en' ? 'Recent order stream' : 'Son sipariş akışı'}</h3>
+            <p className="text-sm text-white/50">{language === 'en' ? 'Latest activity from the order system.' : 'Sipariş sisteminden son hareketler.'}</p>
+          </div>
+          <button onClick={() => onSelectTab('orders')} className="rounded-xl border border-white/10 px-3 py-2 text-sm text-white/70 transition hover:border-mardo-yellow/40 hover:text-mardo-yellow">
+            {language === 'en' ? 'View all' : 'Tümünü gör'}
+          </button>
+        </div>
+        <div className="space-y-3">
+          {(stats?.recentOrders || []).length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-black/20 p-4 text-sm text-white/50">
+              {language === 'en' ? 'No orders yet.' : 'Henüz sipariş yok.'}
+            </div>
+          ) : (
+            stats?.recentOrders.map((order: any) => (
+              <div key={order.id} className="flex flex-col gap-3 rounded-2xl border border-white/10 bg-black/20 p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="font-semibold">{order.orderNumber || `#${String(order.id).slice(-4).toUpperCase()}`}</p>
+                  <p className="text-sm text-white/45">{order.customer?.name || (language === 'en' ? 'Unknown customer' : 'Bilinmeyen müşteri')} · {new Date(order.createdAt).toLocaleString(language === 'en' ? 'en-US' : 'tr-TR')}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">{order.status}</span>
+                  <span className="font-bold text-mardo-yellow">₺{Number(order.total || 0).toFixed(2)}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function PhotoModerationTab({ language }: { language: string }) {
   const [photos] = useState([
@@ -206,7 +513,7 @@ function PhotoModerationTab({ language }: { language: string }) {
                   <p className="font-semibold text-lg">{photo.customerName}</p>
                   <p className="text-sm text-white/60">{photo.email}</p>
                   <p className="text-xs text-white/40 mt-1">
-                    {new Date(photo.uploadedAt).toLocaleDateString()} {new Date(photo.uploadedAt).toLocaleTimeString()}
+                    {new Date(photo.uploadedAt).toLocaleDateString(language === 'en' ? 'en-US' : 'tr-TR')} {new Date(photo.uploadedAt).toLocaleTimeString(language === 'en' ? 'en-US' : 'tr-TR')}
                   </p>
                 </div>
               </div>
@@ -292,11 +599,7 @@ function OrdersManagementTab({ language, user }: { language: string; user: any }
 
       try {
         const response = await fetch('/api/orders?all=true', {
-          headers: {
-            'x-user-id': user?.uid || 'admin',
-            'x-user-email': user?.email || '',
-            'x-user-role': user?.role || 'admin',
-          },
+        headers: await getAuthHeaders(user),
         });
 
         const data = await response.json();
@@ -328,12 +631,7 @@ function OrdersManagementTab({ language, user }: { language: string; user: any }
     try {
       const response = await fetch('/api/orders', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify({
           id: orderId,
           paymentStatus,
@@ -405,9 +703,9 @@ function OrdersManagementTab({ language, user }: { language: string; user: any }
                 </div>
                 <div className="flex-1">
                   <p className="font-semibold">{order.orderNumber}</p>
-                  <p className="text-sm text-white/60">{order.customer?.name || 'Unknown customer'}</p>
+                  <p className="text-sm text-white/60">{order.customer?.name || (language === 'en' ? 'Unknown customer' : 'Bilinmeyen müşteri')}</p>
                   <p className="text-xs text-white/40 mt-1">
-                    {new Date(order.createdAt).toLocaleDateString()} {new Date(order.createdAt).toLocaleTimeString()}
+                    {new Date(order.createdAt).toLocaleDateString(language === 'en' ? 'en-US' : 'tr-TR')} {new Date(order.createdAt).toLocaleTimeString(language === 'en' ? 'en-US' : 'tr-TR')}
                   </p>
                 </div>
                 <div className="text-center">
@@ -473,6 +771,7 @@ function ReservationsManagementTab({ language, user }: { language: string; user:
 
   useEffect(() => {
     loadReservations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadReservations = async () => {
@@ -481,11 +780,7 @@ function ReservationsManagementTab({ language, user }: { language: string; user:
 
     try {
       const response = await fetch('/api/reservations?all=true', {
-        headers: {
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user),
       });
 
       const data = await response.json();
@@ -504,12 +799,7 @@ function ReservationsManagementTab({ language, user }: { language: string; user:
     try {
       const response = await fetch('/api/reservations', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify({
           id: reservationId,
           status,
@@ -539,11 +829,7 @@ function ReservationsManagementTab({ language, user }: { language: string; user:
     try {
       const response = await fetch(`/api/reservations?id=${reservationId}`, {
         method: 'DELETE',
-        headers: {
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user),
       });
 
       if (!response.ok) {
@@ -589,10 +875,10 @@ function ReservationsManagementTab({ language, user }: { language: string; user:
                     <Calendar className="w-6 h-6 text-mardo-purple" />
                   </div>
                   <div className="flex-1">
-                    <p className="font-semibold">{res.customerName || 'Unknown'}</p>
+                    <p className="font-semibold">{res.customerName || (language === 'en' ? 'Unknown' : 'Bilinmiyor')}</p>
                     <p className="text-sm text-white/60">{res.email}</p>
                     <p className="text-xs text-white/40 mt-1">
-                      {new Date(res.reservationDate || '').toLocaleDateString()} at {res.time || 'N/A'}
+                      {new Date(res.reservationDate || '').toLocaleDateString(language === 'en' ? 'en-US' : 'tr-TR')} {language === 'en' ? 'at' : 'saat'} {res.time || (language === 'en' ? 'N/A' : 'Yok')}
                     </p>
                   </div>
                   <div className="text-center">
@@ -645,6 +931,7 @@ function UsersManagementTab({ language, user }: { language: string; user: any })
 
   useEffect(() => {
     loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadUsers = async () => {
@@ -653,11 +940,7 @@ function UsersManagementTab({ language, user }: { language: string; user: any })
 
     try {
       const response = await fetch('/api/users', {
-        headers: {
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user),
       });
 
       const data = await response.json();
@@ -676,12 +959,7 @@ function UsersManagementTab({ language, user }: { language: string; user: any })
     try {
       const response = await fetch('/api/users', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify({
           id: userId,
           role: newRole,
@@ -734,7 +1012,7 @@ function UsersManagementTab({ language, user }: { language: string; user: any })
             <tbody>
               {users.map((u) => (
                 <tr key={u.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                  <td className="py-3 px-4 font-semibold">{u.displayName || 'User'}</td>
+                  <td className="py-3 px-4 font-semibold">{u.displayName || (language === 'en' ? 'User' : 'Kullanıcı')}</td>
                   <td className="py-3 px-4 text-white/60">{u.email}</td>
                   <td className="py-3 px-4">
                     <select
@@ -753,7 +1031,7 @@ function UsersManagementTab({ language, user }: { language: string; user: any })
                     </select>
                   </td>
                   <td className="py-3 px-4 text-white/60 text-sm">
-                    {new Date(u.createdAt).toLocaleDateString()}
+                    {new Date(u.createdAt).toLocaleDateString(language === 'en' ? 'en-US' : 'tr-TR')}
                   </td>
                   <td className="py-3 px-4 flex gap-2">
                     <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors" title={language === 'en' ? 'View details' : 'Detayları görüntüle'}>
@@ -770,20 +1048,19 @@ function UsersManagementTab({ language, user }: { language: string; user: any })
   );
 }
 
-function AnalyticsTab({ language }: { language: string }) {
+function AnalyticsTab({ language, user }: { language: string; user: any }) {
   const [stats, setStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     loadAnalytics();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadAnalytics = async () => {
     try {
       const response = await fetch('/api/orders?all=true', {
-        headers: {
-          'x-user-role': 'admin',
-        },
+        headers: await getAuthHeaders(user),
       });
       const data = await response.json();
       const orders = Array.isArray(data.data) ? data.data : [];
@@ -833,6 +1110,18 @@ function AnalyticsTab({ language }: { language: string }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const translateOrderStatus = (status: string) => {
+    if (language === 'en') return status;
+    const labels: Record<string, string> = {
+      pending: 'Beklemede',
+      preparing: 'Hazırlanıyor',
+      ready: 'Hazır',
+      delivered: 'Teslim Edildi',
+      cancelled: 'İptal Edildi',
+    };
+    return labels[status] || status;
   };
 
   if (isLoading) {
@@ -903,9 +1192,9 @@ function AnalyticsTab({ language }: { language: string }) {
           <div className="space-y-3">
             {Object.entries(stats.statusBreakdown).map(([status, count]: [string, unknown]) => (
               <div key={status} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
-                <p className="font-semibold capitalize">{status}</p>
+                <p className="font-semibold capitalize">{translateOrderStatus(status)}</p>
                 <div className="flex items-center gap-3">
-                  <p className="text-sm text-white/60">{String(count)} orders</p>
+                  <p className="text-sm text-white/60">{String(count)} {language === 'en' ? 'orders' : 'sipariş'}</p>
                   <p className="font-bold text-lg">{String(count)}</p>
                 </div>
               </div>
@@ -919,9 +1208,24 @@ function AnalyticsTab({ language }: { language: string }) {
 
 function NotificationsTab({ language }: { language: string }) {
   const [notifs] = useState([
-    { id: '1', type: 'order', message: 'New order received - ORD-042', time: 'Just now' },
-    { id: '2', type: 'user', message: 'New user registration - ali.yildiz@example.com', time: '5 minutes ago' },
-    { id: '3', type: 'photo', message: 'Photo uploaded for moderation', time: '1 hour ago' },
+    {
+      id: '1',
+      type: 'order',
+      message: { en: 'New order received - ORD-042', tr: 'Yeni sipariş alındı - ORD-042' },
+      time: { en: 'Just now', tr: 'Az önce' },
+    },
+    {
+      id: '2',
+      type: 'user',
+      message: { en: 'New user registration - ali.yildiz@example.com', tr: 'Yeni kullanıcı kaydı - ali.yildiz@example.com' },
+      time: { en: '5 minutes ago', tr: '5 dakika önce' },
+    },
+    {
+      id: '3',
+      type: 'photo',
+      message: { en: 'Photo uploaded for moderation', tr: 'Moderasyon için fotoğraf yüklendi' },
+      time: { en: '1 hour ago', tr: '1 saat önce' },
+    },
   ]);
 
   return (
@@ -940,8 +1244,8 @@ function NotificationsTab({ language }: { language: string }) {
                 'bg-mardo-yellow'
               }`} />
               <div>
-                <p className="font-semibold">{n.message}</p>
-                <p className="text-sm text-white/50">{n.time}</p>
+                <p className="font-semibold">{n.message[language as 'en' | 'tr']}</p>
+                <p className="text-sm text-white/50">{n.time[language as 'en' | 'tr']}</p>
               </div>
             </div>
             <button className="p-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors">
@@ -954,7 +1258,7 @@ function NotificationsTab({ language }: { language: string }) {
   );
 }
 
-function AdminSettingsTab({ language, user }: { language: string; user: any }) {
+function AdminSettingsTab({ language, setLanguage, user }: { language: string; setLanguage: (language: 'en' | 'tr') => void; user: any }) {
   const [settings, setSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -962,17 +1266,14 @@ function AdminSettingsTab({ language, user }: { language: string; user: any }) {
 
   useEffect(() => {
     loadSettings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadSettings = async () => {
     setIsLoading(true);
     try {
       const response = await fetch('/api/settings', {
-        headers: {
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user),
       });
 
       const data = await response.json();
@@ -992,12 +1293,7 @@ function AdminSettingsTab({ language, user }: { language: string; user: any }) {
       const updates = { ...settings, [key]: value };
       const response = await fetch('/api/settings', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify({ [key]: value }),
       });
 
@@ -1034,6 +1330,33 @@ function AdminSettingsTab({ language, user }: { language: string; user: any }) {
       )}
 
       <div className="space-y-4">
+        <div className="bg-gradient-to-br from-mardo-yellow/10 to-white/[0.03] border border-mardo-yellow/30 rounded-xl p-6">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="font-semibold text-lg">{language === 'en' ? 'Admin Portal Language' : 'Yönetici Portalı Dili'}</p>
+              <p className="text-white/60 text-sm mt-1">
+                {language === 'en'
+                  ? 'Translate the whole admin portal and keep your choice for future visits.'
+                  : 'Tüm yönetici portalını çevirin ve seçiminizi sonraki ziyaretler için saklayın.'}
+              </p>
+            </div>
+            <div className="flex rounded-2xl border border-white/15 bg-black/20 p-1">
+              <button
+                onClick={() => setLanguage('en')}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${language === 'en' ? 'bg-mardo-yellow text-mardo-dark' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => setLanguage('tr')}
+                className={`rounded-xl px-4 py-2 text-sm font-bold transition ${language === 'tr' ? 'bg-mardo-yellow text-mardo-dark' : 'text-white/60 hover:bg-white/10 hover:text-white'}`}
+              >
+                Türkçe
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white/5 border border-white/10 rounded-xl p-6">
           <div className="flex items-center justify-between">
             <div>

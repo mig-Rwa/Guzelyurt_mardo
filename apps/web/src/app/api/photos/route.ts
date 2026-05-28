@@ -8,7 +8,7 @@ type PhotoStatus = 'pending' | 'approved' | 'rejected';
 
 export async function POST(request: NextRequest) {
   try {
-    const ctx = getRequestContext(request);
+    const ctx = await getRequestContext(request);
     const formData = await request.formData();
     
     const orderId = formData.get('orderId') as string;
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const ctx = getRequestContext(request);
+    const ctx = await getRequestContext(request);
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
     const featured = parseBooleanParam(searchParams.get('featured'));
@@ -122,7 +122,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const ctx = getRequestContext(request);
+  const ctx = await getRequestContext(request);
   if (!ctx.isModerator) {
     return forbidden();
   }

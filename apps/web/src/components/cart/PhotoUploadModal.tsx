@@ -3,6 +3,8 @@
 import { useState, useRef, ChangeEvent } from 'react';
 import { X, Upload, Camera, Check } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/context/AuthContext';
+import { getAuthHeaders } from '@/lib/client/authHeaders';
 import Image from 'next/image';
 
 interface PhotoUploadModalProps {
@@ -17,6 +19,7 @@ export default function PhotoUploadModal({
   orderId,
 }: PhotoUploadModalProps) {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
   const [customerName, setCustomerName] = useState('');
   const [caption, setCaption] = useState('');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -75,6 +78,7 @@ export default function PhotoUploadModal({
 
       const response = await fetch('/api/photos', {
         method: 'POST',
+        headers: await getAuthHeaders(user),
         body: formData,
       });
 

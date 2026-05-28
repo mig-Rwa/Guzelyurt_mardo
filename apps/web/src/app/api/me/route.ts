@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { getRequestContext, ok } from '@/lib/server/api';
 
 export async function GET(request: NextRequest) {
-  const ctx = getRequestContext(request);
+  const ctx = await getRequestContext(request);
 
   const profile = {
     uid: ctx.userId,

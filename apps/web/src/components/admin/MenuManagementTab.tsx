@@ -5,6 +5,7 @@ import { Edit, Trash2, Plus, X, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { getAuthHeaders } from '@/lib/client/authHeaders';
 import type { MenuItem } from '@shared';
 
 interface MenuFormData {
@@ -38,6 +39,7 @@ export default function MenuManagementTab({ language, user }: { language: string
   // Load menu items
   useEffect(() => {
     loadItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadItems = async () => {
@@ -78,12 +80,7 @@ export default function MenuManagementTab({ language, user }: { language: string
 
       const response = await fetch('/api/menu', {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify(body),
       });
 
@@ -120,12 +117,7 @@ export default function MenuManagementTab({ language, user }: { language: string
     try {
       const response = await fetch('/api/menu', {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': user?.uid || 'admin',
-          'x-user-email': user?.email || '',
-          'x-user-role': user?.role || 'admin',
-        },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify({ id }),
       });
 
@@ -188,7 +180,7 @@ export default function MenuManagementTab({ language, user }: { language: string
             <div key={item.id} className="bg-white/5 border border-white/10 rounded-xl p-4 flex items-center justify-between hover:bg-white/10 transition-all">
               <div className="flex-1">
                 <p className="font-semibold">{item.name[language as 'en' | 'tr']}</p>
-                <p className="text-sm text-white/60">₺{item.price} • {item.category} • Stock: {item.stock}</p>
+                <p className="text-sm text-white/60">₺{item.price} • {categories.find((cat) => cat.id === item.category)?.name || item.category} • {language === 'en' ? 'Stock' : 'Stok'}: {item.stock}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button

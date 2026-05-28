@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { translations, type Language } from '@shared';
 
 type TranslationValue = string | Record<string, unknown>;
@@ -17,8 +17,24 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<Language>('en');
 
+  useEffect(() => {
+    const savedLanguage = window.localStorage.getItem('mardo-language');
+    if (savedLanguage === 'en' || savedLanguage === 'tr') {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  const setPersistedLanguage = useCallback((lang: Language) => {
+    setLanguage(lang);
+    window.localStorage.setItem('mardo-language', lang);
+  }, []);
+
   const toggleLanguage = useCallback(() => {
-    setLanguage(prev => prev === 'en' ? 'tr' : 'en');
+    setLanguage(prev => {
+      const nextLanguage = prev === 'en' ? 'tr' : 'en';
+      window.localStorage.setItem('mardo-language', nextLanguage);
+      return nextLanguage;
+    });
   }, []);
 
   const t = useCallback((key: string): string => {
@@ -37,7 +53,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, toggleLanguage, t }}>
+    <LanguageContext.Provider value={{ language, setLanguage: setPersistedLanguage, toggleLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   );

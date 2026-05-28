@@ -24,7 +24,7 @@ function initializeMenu() {
 
 export async function POST(request: NextRequest) {
   try {
-    const ctx = getRequestContext(request);
+    const ctx = await getRequestContext(request);
     const body = await request.json();
     
     // Validate input
@@ -75,12 +75,12 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const ctx = getRequestContext(request);
+  const ctx = await getRequestContext(request);
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status');
   const includeAll = searchParams.get('all') === 'true';
 
-  let result = includeAll && ctx.isAdmin
+  let result = includeAll && ctx.isModerator
     ? [...db.orders]
     : db.orders.filter((o) => o.userId === ctx.userId);
 
@@ -93,8 +93,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const ctx = getRequestContext(request);
-  if (!ctx.isAdmin) {
+  const ctx = await getRequestContext(request);
+  if (!ctx.isModerator) {
     return forbidden();
   }
 
@@ -106,6 +106,10 @@ export async function PATCH(request: NextRequest) {
 
     if (!orderId || (!status && !paymentStatus)) {
       return fail('Order id and an update value are required', 400);
+    }
+
+    if (paymentStatus && !ctx.isAdmin) {
+      return forbidden();
     }
 
     const allowed: OrderStatus[] = ['pending', 'preparing', 'ready', 'delivered', 'cancelled'];

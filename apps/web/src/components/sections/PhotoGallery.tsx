@@ -113,7 +113,7 @@ export default function PhotoGallery() {
                 </p>
                 {featuredPhoto.caption && (
                   <p className="text-white/90 mb-3 italic">
-                    "{featuredPhoto.caption}"
+                    &ldquo;{featuredPhoto.caption}&rdquo;
                   </p>
                 )}
                 <div className="flex items-center gap-4 text-sm">
@@ -156,7 +156,7 @@ export default function PhotoGallery() {
                       <p className="font-semibold mb-1">{photo.customerName}</p>
                       {photo.caption && (
                         <p className="text-sm text-white/90 line-clamp-2 italic">
-                          "{photo.caption}"
+                          &ldquo;{photo.caption}&rdquo;
                         </p>
                       )}
                       <div className="flex items-center gap-3 text-xs mt-2">

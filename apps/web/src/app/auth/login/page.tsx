@@ -14,6 +14,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { signIn, signInWithGoogle } = useAuth();
   const { t } = useLanguage();
+  const ownerEmail = 'miguelmbabatunga31@gmail.com';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +33,7 @@ export default function LoginPage() {
 
     try {
       await signIn(email, password);
-      router.push('/');
+      router.push(email.trim().toLowerCase() === ownerEmail ? '/admin' : '/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign in');
     } finally {
@@ -45,8 +46,8 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await signInWithGoogle();
-      router.push('/');
+      const signedInUser = await signInWithGoogle();
+      router.push(signedInUser?.email?.toLowerCase() === ownerEmail ? '/admin' : '/dashboard');
     } catch (err: any) {
       setError(err.message || 'Failed to sign in with Google');
     } finally {

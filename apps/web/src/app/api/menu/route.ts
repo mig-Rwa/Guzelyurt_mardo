@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const ctx = getRequestContext(request);
+  const ctx = await getRequestContext(request);
 
   // Only admin can create menu items
   if (!ctx.isAdmin) {
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const ctx = getRequestContext(request);
+  const ctx = await getRequestContext(request);
 
   // Only admin can update menu items
   if (!ctx.isAdmin) {
@@ -109,7 +109,7 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const ctx = getRequestContext(request);
+  const ctx = await getRequestContext(request);
 
   // Only admin can delete menu items
   if (!ctx.isAdmin) {

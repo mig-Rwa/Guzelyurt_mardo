@@ -16,6 +16,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { getAuthHeaders } from '@/lib/client/authHeaders';
 import { generateOrderNumber } from '@/lib/utils';
 import PhotoUploadModal from './PhotoUploadModal';
 
@@ -52,7 +53,7 @@ export default function CheckoutModal({ isOpen, onClose }: CheckoutModalProps) {
     try {
       const response = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify({
           items: cartItems.map((item) => ({
             id: item.id,

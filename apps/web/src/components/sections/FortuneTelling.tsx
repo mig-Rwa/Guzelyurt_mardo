@@ -92,7 +92,7 @@ export default function FortuneTelling() {
 
               {fortune && !isRevealing && (
                 <div className="bg-white/5 rounded-2xl p-5 max-w-sm border border-mardo-purple/20">
-                  <p className="text-white italic mb-4">"{fortune}"</p>
+                  <p className="text-white italic mb-4">&ldquo;{fortune}&rdquo;</p>
                   <Button
                     onClick={resetFortune}
                     variant="ghost"

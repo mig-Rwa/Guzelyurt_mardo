@@ -38,7 +38,7 @@ export default function Testimonials() {
 
               {/* Quote */}
               <p className="text-white/90 mb-6 italic">
-                "{testimonial.text[language]}"
+                &ldquo;{testimonial.text[language]}&rdquo;
               </p>
 
               {/* Author */}

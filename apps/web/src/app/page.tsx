@@ -45,8 +45,6 @@ export default function Home() {
         <Suspense fallback={<SectionSkeleton />}>
           <PhotoGallery />
         </Suspense>
-        <Suspense fallback={<SectionSkeleton />}>          <PhotoGallery />
-        </Suspense>
         <Suspense fallback={<SectionSkeleton />}>          <Testimonials />
         </Suspense>
         <Suspense fallback={<SectionSkeleton />}>

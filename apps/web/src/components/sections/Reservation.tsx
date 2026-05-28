@@ -6,6 +6,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { getAuthHeaders } from '@/lib/client/authHeaders';
 import {
   Select,
   SelectContent,
@@ -39,7 +40,7 @@ export default function Reservation() {
     try {
       const response = await fetch('/api/reservations', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await getAuthHeaders(user, { json: true }),
         body: JSON.stringify(formData),
       });
 

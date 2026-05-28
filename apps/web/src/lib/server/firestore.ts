@@ -10,7 +10,9 @@ import type { ServiceAccount } from 'firebase-admin';
 let db: admin.firestore.Firestore;
 
 try {
-  if (!admin.apps.length) {
+  const isNewApp = !admin.apps.length;
+
+  if (isNewApp) {
     // Try to use FIREBASE_SERVICE_ACCOUNT_KEY environment variable
     const serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
     
@@ -26,7 +28,14 @@ try {
   }
 
   db = admin.firestore();
-  db.settings({ ignoreUndefinedProperties: true });
+
+  // Firestore settings can only be applied once and must happen before any
+  // Firestore calls. In Next.js dev mode, each API route can evaluate this
+  // module separately while sharing the same Firebase Admin app, so only apply
+  // settings when this module created the app.
+  if (isNewApp) {
+    db.settings({ ignoreUndefinedProperties: true });
+  }
 } catch (error) {
   console.error('Failed to initialize Firestore:', error);
   throw error;

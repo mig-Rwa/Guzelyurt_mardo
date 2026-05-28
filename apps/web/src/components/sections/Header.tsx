@@ -13,7 +13,9 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { language, toggleLanguage, t } = useLanguage();
   const { cartCount, setIsCartOpen } = useCart();
-  const { user, logout } = useAuth();
+  const { user, userProfile, logout } = useAuth();
+  const ownerEmail = 'miguelmbabatunga31@gmail.com';
+  const dashboardHref = (userProfile as any)?.role === 'admin' || (user as any)?.role === 'admin' || user?.email?.toLowerCase() === ownerEmail ? '/admin' : '/dashboard';
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -91,21 +93,12 @@ export default function Header() {
             {user ? (
               <>
                 <Link
-                  href={(user as any)?.role === 'admin' ? '/admin' : '/dashboard'}
+                  href={dashboardHref}
                   className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-all duration-300"
                 >
                   <User className="w-4 h-4" />
                   <span>{language === 'en' ? 'Dashboard' : 'Panel'}</span>
                 </Link>
-                {user.email === 'miguelmbabatunga31@gmail.com' && (
-                  <Link
-                    href="/admin-manager"
-                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-mardo-yellow/20 hover:bg-mardo-yellow/30 text-mardo-yellow text-sm transition-all duration-300"
-                  >
-                    <User className="w-4 h-4" />
-                    <span>{language === 'en' ? 'Manage Admins' : 'Yönetici Yönet'}</span>
-                  </Link>
-                )}
                 <button
                   onClick={() => logout()}
                   className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white text-sm transition-all duration-300"
