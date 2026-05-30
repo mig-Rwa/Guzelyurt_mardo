@@ -4,9 +4,11 @@
 This guide walks you through connecting your Mardo Café application to Firebase Firestore for persistent data storage.
 
 ## Current Status
-✅ Firebase SDK already configured  
-✅ Firestore helper modules created  
-⏳ `firebase-admin` package installing...
+✅ Firebase client SDK already configured in `apps/web/.env.local`
+✅ Firestore helper modules created
+✅ `firebase-admin` package is installed
+✅ User dashboard now reads orders, reservations, photos, and local profile settings through the backend/client auth context
+⚠️ Persistent server-side Firestore/Admin features still require `FIREBASE_SERVICE_ACCOUNT_KEY` in `apps/web/.env.local`
 
 ## What Was Added
 
@@ -33,11 +35,13 @@ You need to provide Firebase service account credentials so the server can acces
 2. **Project Settings** → **Service Accounts** tab
 3. Click **Generate new private key**
 4. Save the downloaded JSON file
-5. Add to your `.env.local` file:
-   ```
+5. Add to your `apps/web/.env.local` file:
+   ```env
    FIREBASE_SERVICE_ACCOUNT_KEY='{"type":"service_account","project_id":"mardo-93c90",...}'
    ```
-   (Replace with the content of your service account key JSON)
+   (Replace with the content of your service account key JSON. Keep it on one line, keep the surrounding quotes if your shell needs them, and never commit the real value.)
+
+A safe template is tracked at `apps/web/.env.example`. Copy that file to `apps/web/.env.local` only on your machine and fill in the real values there.
 
 #### Option B: Environment-Based Credentials (Production/Cloud Run)
 - Firebase Admin SDK will auto-detect credentials if deployed to:
@@ -58,12 +62,12 @@ export async function POST(request: NextRequest) {
   try {
     const ctx = getRequestContext(request);
     const body = await request.json();
-    
+
     const validationResult = OrderCreateSchema.safeParse(body);
     if (!validationResult.success) {
       return fail('Invalid order data', 400);
     }
-    
+
     const order = {
       id: uuidv4(),
       orderNumber: generateOrderNumber(),
@@ -71,10 +75,10 @@ export async function POST(request: NextRequest) {
       // ... order data
       createdAt: new Date().toISOString(),
     };
-    
+
     // Save to Firestore instead of mockDb
     await createOrder(order);
-    
+
     return ok(order, {
       status: 201,
       meta: { orderNumber: order.orderNumber },
@@ -113,7 +117,7 @@ export async function PATCH(request: NextRequest) {
 
     // Update via Firestore helper (handles stock decrement)
     const updated = await updateOrder(id, { status, paymentStatus });
-    
+
     return ok(updated);
   } catch (error) {
     console.error('Update error:', error);
@@ -199,7 +203,7 @@ service cloud.firestore {
 
     // Users can read/write their own orders
     match /orders/{orderId} {
-      allow read: if hasProperty(resource.data, 'userId') && 
+      allow read: if hasProperty(resource.data, 'userId') &&
                      (request.auth.uid == resource.data.userId || isAdmin());
       allow create: if request.auth != null;
       allow update: if isAdmin();
@@ -213,7 +217,7 @@ service cloud.firestore {
 
     // Reservations readable by user who created them
     match /reservations/{resId} {
-      allow read: if hasProperty(resource.data, 'userId') && 
+      allow read: if hasProperty(resource.data, 'userId') &&
                      (request.auth.uid == resource.data.userId || isAdmin());
       allow create: if request.auth != null;
       allow update: if isAdmin();
@@ -221,7 +225,7 @@ service cloud.firestore {
 
     // Helper function
     function isAdmin() {
-      return request.auth.token.role == 'admin' || 
+      return request.auth.token.role == 'admin' ||
              request.auth.token.email == 'miguelmbabatunga31@gmail.com';
     }
 
