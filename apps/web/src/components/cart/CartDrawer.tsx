@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { X, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -67,11 +68,15 @@ export default function CartDrawer() {
                   className="flex gap-4 p-4 bg-white/5 rounded-xl border border-white/10"
                 >
                   {/* Image */}
-                  <img
-                    src={item.image}
-                    alt={item.name[language]}
-                    className="w-20 h-20 object-cover rounded-lg"
-                  />
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg">
+                    <Image
+                      src={item.image}
+                      alt={item.name[language]}
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                    />
+                  </div>
 
                   {/* Details */}
                   <div className="flex-1 min-w-0">
